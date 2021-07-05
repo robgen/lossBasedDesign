@@ -1,0 +1,19 @@
+
+
+The mechanical characterisation of the members was not expressly carried out.
+Probably the frame is symmetric.
+If so, check the symmetric Sub-assembly. 
+
+
+
+=*=*=*=*=*=*=*
+Hierarchy of Strength
+=*=*=*=*=*=*=*
+
+Push
+ Bf,L	  Bf,R	  Cf,Down	  JvC	  Cv,Down	  JvD	  Bv,R	  Bv,L	 
+Pull
+ JvC	  Cf,Down	  Bf,L	  Bf,R	  JvD	  Cv,Down	  Bv,R	  Bv,L	 
+
+
+Legenda

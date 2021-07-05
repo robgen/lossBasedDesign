@@ -1,0 +1,435 @@
+
+
+=*=*=*=*=*=*=*=*=*=*=*=*
+TOP Column  -  Negative Moment
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+Rectangular Section
+
+normalweight concrete
+Width:  300.0 mm   Height:  500.0 mm
+cover to longitudinal bars:  30.0 mm
+
+Dist.Top	# Long	Diameter
+[mm]	Bars	[mm]
+30.0	3.0	22.00
+250.0	2.0	22.00
+470.0	3.0	22.00
+
+diameter of transverse steel:  10.0 mm
+spacing of transverse steel:  100.0 mm
+# legs transv. steel x_dir (confinement):   2.0
+# legs transv. steel y_dir (shear):   2.0
+axial load:     33.33 kN
+concrete compressive strength:  30.00 MPa
+long steel yielding stress:  300.00 MPa
+long steel max. stress:  390.00 MPa
+transverse steel yielding stress:  300.00 MPa
+Member Length:  3000.0 mm
+Double Bending
+Biaxial Bending
+Longitudinal Steel Ratio:  0.020
+Average Transverse Steel Ratio:  0.005
+Axial Load Ratio:  0.007
+
+Cover	Core	N.A	Steel	Moment	Curvature	Force	Sh displ.	Fl displ.	Total displ.	Shear(assess.)	Shear(design)
+Strain	Strain	[mm]	Strain	[kN-m]	[1/m]	[kN]	[m]	[m]	[m]	[kN]	[kN]
+0.00000	0.00000	0.00	0.00000	    0.00	0.00000	    0.00	0.00000	0.00000	0.00000	  440.10	  368.48
+0.00010	0.00008	157.56	-0.00018	   27.34	0.00063	   18.22	0.00005	0.00095	0.00100	  440.10	  368.48
+0.00020	0.00016	140.78	-0.00043	   54.85	0.00142	   36.57	0.00009	0.00225	0.00234	  440.10	  368.48
+0.00030	0.00024	135.94	-0.00069	   82.03	0.00221	   54.69	0.00014	0.00361	0.00375	  440.10	  368.48
+0.00040	0.00033	133.91	-0.00093	  109.05	0.00299	   72.70	0.00018	0.00504	0.00522	  440.10	  368.48
+0.00050	0.00041	132.91	-0.00118	  136.00	0.00376	   90.67	0.00023	0.00653	0.00676	  440.10	  368.48
+0.00060	0.00049	132.24	-0.00143	  162.35	0.00454	  108.23	0.00027	0.00812	0.00839	  440.10	  368.48
+0.00070	0.00056	123.45	-0.00183	  176.19	0.00567	  117.46	0.00029	0.00967	0.00997	  440.10	  368.48
+0.00080	0.00063	114.66	-0.00232	  183.82	0.00698	  122.55	0.00031	0.01101	0.01132	  440.10	  368.48
+0.00090	0.00069	108.93	-0.00279	  191.49	0.00826	  127.66	0.00032	0.01234	0.01266	  438.31	  366.94
+0.00100	0.00076	104.92	-0.00326	  199.05	0.00953	  132.70	0.00033	0.01365	0.01398	  436.02	  364.96
+0.00110	0.00083	101.05	-0.00376	  206.04	0.01089	  137.36	0.00034	0.01502	0.01536	  433.62	  362.90
+0.00120	0.00087	91.20	-0.00468	  206.79	0.01316	  137.86	0.00035	0.01702	0.01736	  430.14	  359.90
+0.00130	0.00092	84.71	-0.00555	  208.94	0.01535	  139.29	0.00035	0.01898	0.01933	  426.72	  356.95
+0.00140	0.00096	79.67	-0.00645	  209.98	0.01757	  139.99	0.00035	0.02095	0.02130	  423.29	  354.00
+0.00150	0.00100	75.69	-0.00735	  210.10	0.01982	  140.07	0.00035	0.02291	0.02326	  419.88	  351.06
+0.00160	0.00104	71.72	-0.00836	  212.01	0.02231	  141.34	0.00035	0.02513	0.02548	  416.02	  347.72
+0.00180	0.00117	71.54	-0.01062	  216.58	0.02516	  144.39	0.00036	0.02773	0.02810	  411.47	  343.80
+0.00200	0.00118	60.88	-0.01267	  223.68	0.03285	  149.12	0.00037	0.03463	0.03500	  399.47	  333.46
+0.00250	0.00136	54.67	-0.01792	  234.32	0.04573	  156.21	0.00000	0.04613	0.04613	  380.11	  316.77
+0.00300	0.00155	51.81	-0.02286	  243.66	0.05791	  162.44	0.00000	0.05699	0.05699	  361.23	  300.49
+0.00350	0.00175	50.02	-0.02774	  250.70	0.06997	  167.13	0.00000	0.06769	0.06769	  342.63	  284.46
+0.00400	0.00202	50.59	-0.03130	  254.12	0.07907	  169.42	0.00000	0.07571	0.07571	  328.68	  272.44
+0.00450	0.00230	51.16	-0.03477	  257.05	0.08796	  171.36	0.00000	0.08353	0.08353	  318.69	  263.82
+0.00500	0.00258	51.61	-0.03826	  258.95	0.09688	  172.63	0.00000	0.09136	0.09136	  318.69	  263.82
+0.00600	0.00323	54.06	-0.04356	  258.43	0.11100	  172.28	0.00000	0.10364	0.10364	  318.69	  263.82
+0.00700	0.00420	62.42	-0.04307	  255.94	0.11215	  170.63	0.00000	0.10457	0.10457	  318.69	  263.82
+0.00800	0.00537	75.96	-0.03902	  249.80	0.10531	  166.54	0.00000	0.09846	0.09846	  318.69	  263.82
+0.00900	0.00634	84.49	-0.04357	  251.10	0.10653	  167.40	0.00000	0.09955	0.09955	  318.69	  263.82
+0.01000	0.00706	85.01	-0.04805	  252.29	0.11763	  168.20	0.00000	0.10925	0.10925	  318.69	  263.82
+ 
+Bilinear Approximation:
+
+Curvature	Moment	Displ.	Force
+[1/m]	[kN-m]	[m]	[kN]
+0.00000	    0.00	0.00000	    0.00
+0.00657	  228.40	0.01202	  152.27
+0.11763	  252.29	0.10925	  168.20
+ 
+ *** steel strain exceeds maximum ***
+
+Moment for First Yielding:    164.88 kN-m
+Curvature for First Yielding:  0.00474 1/m
+Potential Section Nominal Moment:    228.40 kN-m
+Equivalent Curvature:  0.00657 1/m
+Potential Section Curvature Ductility:  17.90
+Potential Displacement Ductility:  9.09
+ 
+ *** flexural failure *** 
+Moyer - Kowalsky buckling model:
+
+Curvature Ductility for Buckling:     16.90
+Curvature at Buckling:  0.11107 m
+Displacement Ductility at Buckling:      8.63
+Displacement at Buckling:  0.10370 m
+Force for Buckling:    172.18 kN
+Moment for Buckling:    258.27 kN
+
+
+
+== Potential Deformation Limit States (serviceability/damage control/ultimate) ==
+
+Cover	Steel	Moment	Force	Curvature	Curvature	Displacement	Displacement
+Strain	Strain	[kN-m]	[kN]	[1/m]	Ductility	[m]	Ductility
+0.00222	-0.01500	  228.40	  152.27	0.03857	5.87	0.03994	3.32
+0.00382	-0.03000	  252.87	  168.58	0.07574	11.52	0.07277	6.06
+0.01000	-0.04805	  252.29	  168.20	0.11763	17.90	0.10925	9.09
+
+Deformation Limit States Citeria :
+   serviceability concrete strain: 0.0040
+   serviceability steel strain: -0.0150
+   damage control concrete strain: 0.0115
+   damage control steel strain: -0.0300
+
+Original Mander Model Ultimate Concrete Strain: 0.0115
+
+for non-linear THA:
+
+E: 27386127.88 KPa
+G: 11776034.99 KPa
+A: 0.1500 m2
+I: 0.001269 m4
+WGT:   3.750000 KN/m
+Bi-Factor: 0.006
+Hinge Length: 0.290 m
+Tension Yield:  912318.51 N
+Compression Yield: 5053747.69 N
+Moment Yield:  228403.54 N-m
+
+
+=*=*=*=*=*=*=*=*=*=*=*=*
+TOP Column  -  Positive Moment
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+Symmetrical...Same as Negative
+
+
+=*=*=*=*=*=*=*=*=*=*=*=*
+BOTTOM Column  -  Negative Moment
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+Rectangular Section
+
+normalweight concrete
+Width:  300.0 mm   Height:  500.0 mm
+cover to longitudinal bars:  30.0 mm
+
+Dist.Top	# Long	Diameter
+[mm]	Bars	[mm]
+30.0	3.0	22.00
+250.0	2.0	22.00
+470.0	3.0	22.00
+
+diameter of transverse steel:  10.0 mm
+spacing of transverse steel:  100.0 mm
+# legs transv. steel x_dir (confinement):   2.0
+# legs transv. steel y_dir (shear):   2.0
+axial load:     50.00 kN
+concrete compressive strength:  30.00 MPa
+long steel yielding stress:  300.00 MPa
+long steel max. stress:  390.00 MPa
+transverse steel yielding stress:  300.00 MPa
+Member Length:  3000.0 mm
+Double Bending
+Biaxial Bending
+Longitudinal Steel Ratio:  0.020
+Average Transverse Steel Ratio:  0.005
+Axial Load Ratio:  0.011
+
+Cover	Core	N.A	Steel	Moment	Curvature	Force	Sh displ.	Fl displ.	Total displ.	Shear(assess.)	Shear(design)
+Strain	Strain	[mm]	Strain	[kN-m]	[1/m]	[kN]	[m]	[m]	[m]	[kN]	[kN]
+0.00000	0.00000	0.00	0.00000	    0.00	0.00000	    0.00	0.00000	0.00000	0.00000	  441.53	  369.71
+0.00010	0.00009	174.58	-0.00016	   26.98	0.00057	   17.99	0.00004	0.00086	0.00090	  441.53	  369.71
+0.00020	0.00017	148.19	-0.00040	   54.43	0.00135	   36.28	0.00009	0.00213	0.00222	  441.53	  369.71
+0.00030	0.00025	140.43	-0.00065	   81.57	0.00214	   54.38	0.00014	0.00348	0.00362	  441.53	  369.71
+0.00040	0.00033	137.30	-0.00090	  108.74	0.00291	   72.50	0.00018	0.00489	0.00507	  441.53	  369.71
+0.00050	0.00041	135.60	-0.00115	  135.44	0.00369	   90.30	0.00023	0.00638	0.00661	  441.53	  369.71
+0.00060	0.00049	134.58	-0.00139	  161.67	0.00446	  107.78	0.00027	0.00794	0.00821	  441.53	  369.71
+0.00070	0.00056	127.21	-0.00176	  178.04	0.00550	  118.69	0.00030	0.00955	0.00985	  441.53	  369.71
+0.00080	0.00063	117.57	-0.00224	  185.85	0.00680	  123.90	0.00031	0.01090	0.01120	  441.53	  369.71
+0.00090	0.00070	111.13	-0.00272	  193.16	0.00810	  128.77	0.00032	0.01222	0.01254	  440.15	  368.52
+0.00100	0.00077	106.77	-0.00318	  200.74	0.00937	  133.83	0.00033	0.01352	0.01386	  437.87	  366.56
+0.00110	0.00083	103.35	-0.00365	  207.83	0.01064	  138.56	0.00035	0.01483	0.01517	  435.61	  364.61
+0.00120	0.00088	95.04	-0.00444	  210.94	0.01263	  140.63	0.00035	0.01664	0.01699	  432.48	  361.91
+0.00130	0.00093	87.40	-0.00534	  212.23	0.01487	  141.49	0.00035	0.01863	0.01898	  429.04	  358.95
+0.00140	0.00097	81.79	-0.00624	  212.99	0.01712	  142.00	0.00035	0.02061	0.02096	  425.63	  356.01
+0.00150	0.00102	77.70	-0.00712	  214.06	0.01930	  142.71	0.00036	0.02254	0.02290	  422.29	  353.13
+0.00160	0.00111	81.59	-0.00808	  212.77	0.01961	  141.84	0.00035	0.02277	0.02313	  421.90	  352.79
+0.00180	0.00119	73.45	-0.01029	  218.17	0.02451	  145.44	0.00036	0.02718	0.02755	  414.28	  346.22
+0.00200	0.00120	62.66	-0.01225	  226.78	0.03192	  151.19	0.00038	0.03387	0.03425	  402.73	  336.27
+0.00250	0.00138	55.71	-0.01754	  237.05	0.04488	  158.03	0.00000	0.04543	0.04543	  383.44	  319.64
+0.00300	0.00158	52.66	-0.02244	  246.86	0.05697	  164.57	0.00000	0.05623	0.05623	  364.83	  303.60
+0.00350	0.00179	51.10	-0.02708	  253.52	0.06850	  169.01	0.00000	0.06645	0.06645	  347.21	  288.41
+0.00400	0.00206	51.55	-0.03065	  256.41	0.07760	  170.94	0.00000	0.07446	0.07446	  333.41	  276.51
+0.00450	0.00234	52.13	-0.03404	  259.44	0.08632	  172.96	0.00000	0.08214	0.08214	  320.17	  265.10
+0.00500	0.00262	52.59	-0.03745	  261.36	0.09508	  174.24	0.00000	0.08982	0.08982	  320.12	  265.06
+0.00600	0.00332	55.98	-0.04186	  262.48	0.10718	  174.99	0.00000	0.10039	0.10039	  320.12	  265.06
+0.00700	0.00466	74.64	-0.03487	  253.76	0.09378	  169.17	0.00000	0.08848	0.08848	  320.12	  265.06
+0.00800	0.00539	76.63	-0.03861	  252.47	0.10440	  168.31	0.00000	0.09770	0.09770	  320.12	  265.06
+0.00900	0.00608	77.11	-0.04311	  254.26	0.11672	  169.50	0.00000	0.10848	0.10848	  320.12	  265.06
+0.01000	0.00678	77.59	-0.04754	  255.65	0.12888	  170.43	0.00000	0.11911	0.11911	  320.12	  265.06
+ 
+Bilinear Approximation:
+
+Curvature	Moment	Displ.	Force
+[1/m]	[kN-m]	[m]	[kN]
+0.00000	    0.00	0.00000	    0.00
+0.00665	  232.12	0.01212	  154.75
+0.12888	  255.65	0.11911	  170.43
+ 
+ *** steel strain exceeds maximum ***
+
+Moment for First Yielding:    166.56 kN-m
+Curvature for First Yielding:  0.00477 1/m
+Potential Section Nominal Moment:    232.12 kN-m
+Equivalent Curvature:  0.00665 1/m
+Potential Section Curvature Ductility:  19.39
+Potential Displacement Ductility:  9.82
+ 
+ *** flexural failure *** 
+Moyer - Kowalsky buckling model:
+
+Curvature Ductility for Buckling:     18.50
+Curvature at Buckling:  0.12300 m
+Displacement Ductility at Buckling:      9.40
+Displacement at Buckling:  0.11397 m
+Force for Buckling:    169.98 kN
+Moment for Buckling:    254.98 kN
+
+
+
+== Potential Deformation Limit States (serviceability/damage control/ultimate) ==
+
+Cover	Steel	Moment	Force	Curvature	Curvature	Displacement	Displacement
+Strain	Strain	[kN-m]	[kN]	[1/m]	Ductility	[m]	Ductility
+0.00226	-0.01500	  232.12	  154.75	0.03866	5.81	0.04006	3.30
+0.00391	-0.03000	  255.88	  170.59	0.07594	11.42	0.07300	6.02
+0.01000	-0.04754	  255.65	  170.43	0.12888	19.39	0.11911	9.82
+
+Deformation Limit States Citeria :
+   serviceability concrete strain: 0.0040
+   serviceability steel strain: -0.0150
+   damage control concrete strain: 0.0115
+   damage control steel strain: -0.0300
+
+Original Mander Model Ultimate Concrete Strain: 0.0115
+
+for non-linear THA:
+
+E: 27386127.88 KPa
+G: 11776034.99 KPa
+A: 0.1500 m2
+I: 0.001275 m4
+WGT:   3.750000 KN/m
+Bi-Factor: 0.006
+Hinge Length: 0.290 m
+Tension Yield:  912318.51 N
+Compression Yield: 5053747.69 N
+Moment Yield:  232119.42 N-m
+
+
+=*=*=*=*=*=*=*=*=*=*=*=*
+BOTTOM Column  -  Positive Moment
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+Symmetrical...Same as Negative
+
+
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+Beam DX -  Negative Moment
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+Rectangular Section
+
+normalweight concrete
+Width:  300.0 mm   Height:  600.0 mm
+cover to longitudinal bars:  30.0 mm
+
+Dist.Top	# Long	Diameter
+[mm]	Bars	[mm]
+30.0	4.0	22.00
+300.0	2.0	22.00
+570.0	4.0	22.00
+
+diameter of transverse steel:  10.0 mm
+spacing of transverse steel:  100.0 mm
+# legs transv. steel x_dir (confinement):   2.0
+# legs transv. steel y_dir (shear):   2.0
+axial load:      0.00 kN
+concrete compressive strength:  30.00 MPa
+long steel yielding stress:  300.00 MPa
+long steel max. stress:  390.00 MPa
+transverse steel yielding stress:  300.00 MPa
+Member Length:  5450.0 mm
+Double Bending
+Biaxial Bending
+Longitudinal Steel Ratio:  0.021
+Average Transverse Steel Ratio:  0.005
+Axial Load Ratio:  0.000
+
+Cover	Core	N.A	Steel	Moment	Curvature	Force	Sh displ.	Fl displ.	Total displ.	Shear(assess.)	Shear(design)
+Strain	Strain	[mm]	Strain	[kN-m]	[1/m]	[kN]	[m]	[m]	[m]	[kN]	[kN]
+0.00000	0.00000	0.00	0.00000	    0.00	0.00000	    0.00	0.00000	0.00000	0.00000	  534.03	  447.05
+0.00010	0.00008	154.00	-0.00025	   44.00	0.00065	   16.15	0.00005	0.00321	0.00327	  534.03	  447.05
+0.00020	0.00017	153.62	-0.00050	   87.58	0.00130	   32.14	0.00010	0.00668	0.00678	  534.03	  447.05
+0.00030	0.00026	169.36	-0.00076	  130.52	0.00177	   47.90	0.00015	0.00925	0.00940	  534.03	  447.05
+0.00040	0.00034	168.94	-0.00102	  172.62	0.00237	   63.35	0.00020	0.01258	0.01278	  534.03	  447.05
+0.00050	0.00042	154.58	-0.00125	  216.57	0.00323	   79.48	0.00025	0.01747	0.01772	  534.03	  447.05
+0.00060	0.00051	170.42	-0.00151	  257.09	0.00352	   94.35	0.00030	0.01936	0.01966	  534.03	  447.05
+0.00070	0.00057	138.81	-0.00203	  269.36	0.00504	   98.85	0.00031	0.02256	0.02287	  534.03	  447.05
+0.00080	0.00065	129.26	-0.00255	  281.08	0.00619	  103.15	0.00032	0.02509	0.02542	  534.03	  447.05
+0.00090	0.00071	121.27	-0.00312	  292.91	0.00742	  107.49	0.00034	0.02778	0.02812	  531.69	  445.03
+0.00100	0.00078	115.20	-0.00370	  303.37	0.00868	  111.33	0.00035	0.03044	0.03079	  529.12	  442.82
+0.00110	0.00086	114.91	-0.00463	  303.52	0.00957	  111.38	0.00035	0.03194	0.03229	  527.67	  441.57
+0.00120	0.00091	103.45	-0.00574	  303.17	0.01160	  111.26	0.00035	0.03532	0.03567	  524.42	  438.76
+0.00130	0.00093	86.72	-0.00682	  308.98	0.01499	  113.39	0.00035	0.04131	0.04167	  518.64	  433.78
+0.00140	0.00097	80.55	-0.00801	  309.92	0.01738	  113.73	0.00036	0.04537	0.04573	  514.74	  430.42
+0.00150	0.00106	84.58	-0.00911	  313.18	0.01774	  114.93	0.00036	0.04614	0.04650	  514.00	  429.78
+0.00160	0.00106	74.26	-0.01007	  321.33	0.02155	  117.92	0.00037	0.05295	0.05332	  507.42	  424.11
+0.00180	0.00115	68.97	-0.01233	  331.16	0.02610	  121.53	0.00038	0.06110	0.06148	  499.57	  417.34
+0.00200	0.00122	63.74	-0.01499	  340.44	0.03138	  124.93	0.00039	0.07043	0.07082	  490.57	  409.58
+0.00250	0.00139	56.53	-0.02145	  359.62	0.04422	  131.97	0.00000	0.09298	0.09298	  469.23	  391.19
+0.00300	0.00158	52.64	-0.02786	  373.56	0.05699	  137.09	0.00000	0.11512	0.11512	  447.91	  372.81
+0.00350	0.00192	55.27	-0.03440	  381.75	0.06332	  140.09	0.00000	0.12617	0.12617	  437.28	  363.64
+0.00400	0.00204	50.95	-0.03851	  388.86	0.07850	  142.70	0.00000	0.15199	0.15199	  412.41	  342.21
+0.00450	0.00250	56.18	-0.04344	  387.35	0.08010	  142.15	0.00000	0.15460	0.15460	  409.90	  340.05
+0.00500	0.00260	52.05	-0.04702	  394.79	0.09606	  144.88	0.00000	0.18175	0.18175	  385.62	  319.12
+0.00600	0.00335	56.67	-0.05133	  394.93	0.10588	  144.93	0.00000	0.19821	0.19821	  385.62	  319.12
+ 
+Bilinear Approximation:
+
+Curvature	Moment	Displ.	Force
+[1/m]	[kN-m]	[m]	[kN]
+0.00000	    0.00	0.00000	    0.00
+0.00467	  340.47	0.02608	  124.94
+0.10588	  394.93	0.19821	  144.93
+ 
+ *** steel strain exceeds maximum ***
+
+Moment for First Yielding:    255.97 kN-m
+Curvature for First Yielding:  0.00351 1/m
+Potential Section Nominal Moment:    340.47 kN-m
+Equivalent Curvature:  0.00467 1/m
+Potential Section Curvature Ductility:  22.66
+Potential Displacement Ductility:  7.60
+ 
+ *** flexural failure *** 
+Moyer - Kowalsky buckling model:
+
+Curvature Ductility for Buckling:     19.02
+Curvature at Buckling:  0.08885 m
+Displacement Ductility at Buckling:      6.50
+Displacement at Buckling:  0.16948 m
+Force for Buckling:    143.64 kN
+Moment for Buckling:    391.43 kN
+
+
+
+== Potential Deformation Limit States (serviceability/damage control/ultimate) ==
+
+Cover	Steel	Moment	Force	Curvature	Curvature	Displacement	Displacement
+Strain	Strain	[kN-m]	[kN]	[1/m]	Ductility	[m]	Ductility
+0.00200	-0.01500	  340.47	  124.94	0.03140	6.72	0.07086	2.72
+0.00316	-0.03000	  376.24	  138.07	0.05906	12.64	0.11873	4.55
+0.00600	-0.05133	  394.93	  144.93	0.10588	22.66	0.19821	7.60
+
+Deformation Limit States Citeria :
+   serviceability concrete strain: 0.0040
+   serviceability steel strain: -0.0150
+   damage control concrete strain: 0.0113
+   damage control steel strain: -0.0300
+
+Original Mander Model Ultimate Concrete Strain: 0.0113
+
+for non-linear THA:
+
+E: 27386127.88 KPa
+G: 11776034.99 KPa
+A: 0.1800 m2
+I: 0.002661 m4
+WGT:   4.500000 KN/m
+Bi-Factor: 0.007
+Hinge Length: 0.309 m
+Tension Yield: 1140398.13 N
+Compression Yield: 6123307.78 N
+Moment Yield:  340467.11 N-m
+
+
+=*=*=*=*=*=*=*=*=*=*=*=*
+Beam DX -  Positive Moment
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+Symmetrical...Same as Negative
+
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+THERE IS NO LEFT BEAM
+=*=*=*=*=*=*=*=*=*=*=*=*
+
+
+=*=*=*=*=*=*
+Joint
+=*=*=*=*=*=*
+
+
+Type: ext 
+pt1:     1.6 MPa
+pt2:     2.2 MPa
+
+
+=*=*=*=*
+OVERALL
+=*=*=*=*
+
+ 	 BendDIR 	 THETAy	 My	 THETAu	 Mu	 THETAb	 M(Vmin)	 THETAv	 bar slip	 	FAILURE
+ 	 [-] 	 [rad]	 [KNm]	 [rad]	 [KNm]	 [rad]	 [KNm]	 [rad]	 [-]	 	[-]
+
+ TOP COLUMN	 + 	 0.0040 	 228.40 	 0.0364 	 252.29 	 0.0605 	  	  	 No 		 ULTflex 
+ TOP COLUMN	 - 	 0.0040 	 228.40 	 0.0364 	 252.29 	 0.0605 	  	  	 No 		 ULTflex 
+ BOTTOM COLUMN	 + 	 0.0040 	 232.12 	 0.0397 	 255.65 	 0.0603 	  	  	 No 		 ULTflex 
+ BOTTOM COLUMN	 - 	 0.0040 	 232.12 	 0.0397 	 255.65 	 0.0603 	  	  	 No 		 ULTflex 
+ RIGHT BEAM	 + 	 0.0048 	 340.47 	 0.0364 	 394.93 	 0.0703 	  	  	 No 		 ULTflex 
+ RIGHT BEAM	 - 	 0.0048 	 340.47 	 0.0364 	 394.93 	 0.0703 	  	  	 No 		 ULTflex 
+
+=*=*=*=*=*=*=*
+Hierarchy of Strength
+=*=*=*=*=*=*=*
+
+Push
+ Bf	  JvC	  JvD	  Cf,Down	  Cf,Up	  Cv,Down	  Cv,Up	  Bv	 
+Pull
+ JvC	  Cf,Down	  Cf,Up	  Bf	  JvD	  Bv	  Cv,Up	  Cv,Down	 
+
+
+Legenda
