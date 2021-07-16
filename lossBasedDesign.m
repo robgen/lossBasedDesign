@@ -104,7 +104,7 @@ classdef lossBasedDesign
             end
             
             self.isCANDIDATE = self.isEALTARGET & ...
-                reshape(all(self.CDRs>=1, 2), ...
+                reshape(all(self.CDRs >= self.parameters.SDoF.minCDR, 2), ...
                 size(self.isEALTARGET,1), size(self.isEALTARGET,2));
             self.isCandidate = reshape(...
                 self.isCANDIDATE, numel(self.isCANDIDATE), 1);
@@ -131,7 +131,8 @@ classdef lossBasedDesign
                     'DisplayName', sprintf('DS%d el. demand', ds));
             end
             for k = numel(self.pushCandidates) : -1 : 1
-                if all(self.CDRcandidates(k,:)>1)
+                if all(self.CDRcandidates(k,:) >= ...
+                        self.parameters.SDoF.minCDR)
                     lineType = '-';
                 else
                     lineType = '--';
@@ -410,8 +411,8 @@ classdef lossBasedDesign
             macroFieldsPar = {'SDoF', 'FragVuln', 'Hazard', 'Frame'};
             
             microFieldsPar{1} = {'toleranceEAL', 'hardening', 'hysteresis', ...
-                'fyBounds', 'muBounds'};
-            microFieldsParVals{1} = { 0.01, 0.1, 'MTf', [0.15 0.4], [1.5 6] };
+                'fyBounds', 'muBounds', 'minCDR'};
+            microFieldsParVals{1} = { 0.01, 0.1, 'MTf', [0.15 0.4], [1.5 6], [1 1 1 1] };
             
             microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'maxIM'};
             microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, 2.5};
