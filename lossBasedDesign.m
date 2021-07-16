@@ -155,8 +155,11 @@ classdef lossBasedDesign
                 'Value',self.isDesign, 'Callback', @setSlider);
                         
             function setSlider(src, event) %#ok<INUSD>
-                candPlot(self.isDesign).Color = 0.5*[1 1 1];
-                candPlot(self.isDesign).LineWidth = 0.5;
+                src.UserData = get(gca,'Title');
+                src.UserData = str2double(src.UserData.String);
+                
+                candPlot(src.UserData).Color = 0.5*[1 1 1];
+                candPlot(src.UserData).LineWidth = 0.5;
                 
                 src.Value = round(src.Value);
                 
