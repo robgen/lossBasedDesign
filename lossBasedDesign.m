@@ -60,9 +60,11 @@ classdef lossBasedDesign
         end
         
         
-        function self = getSeedEAL(self, GPfullFit)
+        function self = getSeedEAL(self, GPfullFit, manualDeltaYield)
             
-            self = frameDBDgeneral(self);
+            if nargin < 3; manualDeltaYield = 0; end
+            
+            self = frameDBDgeneral(self, manualDeltaYield);
             self = setSeedSDoFproperties(self);
             self = setDSthresholds(self);
             self = getFragilityVulnerability(self, GPfullFit);
@@ -112,9 +114,11 @@ classdef lossBasedDesign
         end
         
         
-        function self = selectDesignSDoF(self, selectedSDoF)
+        function self = selectDesignSDoF(self, selectedSDoF, comparativePush)
             
             if nargin < 2; selectedSDoF = 1; end
+            if nargin < 3; comparativePush = 0; end
+            
             self.isDesign = selectedSDoF;
             self.pushDesign = self.pushCandidates{selectedSDoF};
             
@@ -143,6 +147,13 @@ classdef lossBasedDesign
             end
             candPlot(self.isDesign).Color = [0 0 0];
             candPlot(self.isDesign).LineWidth = 2;
+            
+            if size(comparativePush,1) ~= 1
+                plot(comparativePush(:,1), comparativePush(:,2), ...
+                    'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
+                    'DisplayName', 'Comparative');
+            end
+            
             title(self.isDesign)
             legend([p, candPlot(1)])
             xlabel('Displacement [m]')
@@ -193,10 +204,8 @@ classdef lossBasedDesign
             frame.driftProfileNC = ...
                 (frame.dispProfileNC - [0; frame.dispProfileNC(1:end-1)]) ./ ...
                 frame.heightInterstorey;
-            
-            driftPlastic = frame.driftProfileNC - frame.driftYield;
-            
-            frame.beamPlasticDriftNC = driftPlastic / ...
+                        
+            frame.beamDriftNC = frame.driftProfileNC / ...
                 (1 - frame.heightColumn/frame.lengthBeam);
                         
             frame.baseShearNC = self.pushDesign(3,2) * frame.effMass * g;
@@ -226,20 +235,20 @@ classdef lossBasedDesign
             % DESIGN CHOICE
             % Averaging beam plastic rotation
             if frame.limitBeams ~= 0
-                frame.beamPlasticDriftDesign = ones(frame.limitBeams(1),1) * ...
-                    mean( frame.beamPlasticDriftNC(1:frame.limitBeams(1)) ) ;
+                frame.beamDriftDesign = ones(frame.limitBeams(1),1) * ...
+                    mean( frame.beamDriftNC(1:frame.limitBeams(1)) ) ;
                 for j = 2:length(frame.limitBeams)
-                    frame.beamPlasticDriftDesign(end+1) = ones(...
+                    frame.beamDriftDesign(end+1) = ones(...
                         frame.limitBeams(j)-frame.limitBeams(j-1),1) * ...
-                        mean (frame.beamPlasticDriftNC(...
+                        mean (frame.beamDriftNC(...
                         frame.limitBeams(j-1)+1:frame.limitBeams(j))) ;
                 end
-                frame.beamPlasticDriftDesign(end+1:frame.Nstoreys) = ...
+                frame.beamDriftDesign(end+1:frame.Nstoreys) = ...
                     ones(frame.Nstoreys-frame.limitBeams(end),1) * ...
-                    mean( frame.beamPlasticDriftNC(...
+                    mean( frame.beamDriftNC(...
                     frame.limitBeams(end)+1:frame.Nstoreys ) ) ;
             else
-                frame.beamPlasticDriftDesign = frame.beamPlasticDriftNC;
+                frame.beamDriftDesign = frame.beamDriftNC;
             end
             
             % Averaging of the beam shears and column moments 
@@ -335,7 +344,7 @@ classdef lossBasedDesign
                 [0.441071428571428 0.140476190476191 0.45 0.230952380952386],...
                 'String',{['M_{b1} =' ...
                 sprintf('%d',round(frame.MbeamIntersectionDesign(1))) ...
-                'kNm @'  sprintf('%1.3f', frame.beamPlasticDriftDesign(1)) 'Rad'],...
+                'kNm @'  sprintf('%1.3f', frame.beamDriftDesign(1)) 'Rad'],...
                 ['M_{c,ext} = ' sprintf('%d',round(frame.McolExtDesign(1))) 'kNm'], ...
                 ['M_{c,int} = ' sprintf('%d',round(frame.McolIntDesign(1))) 'kNm']},...
                 'FontSize',18,...
@@ -454,7 +463,9 @@ classdef lossBasedDesign
         end
         
         
-        function self = frameDBDgeneral(self)
+        function self = frameDBDgeneral(self, manualDeltaYield)
+            
+            if nargin < 2; manualDeltaYield = 0; end
             
             % shorten the variable name
             frame = self.parameters.Frame;
@@ -482,21 +493,27 @@ classdef lossBasedDesign
                     (1-frame.heightStorey/(4*frame.heightStorey(end))) ;
             end            
             
-            frame.driftYield = 0.5 * frame.epsYsteel * ...
-                (frame.lengthBeam-frame.heightColumn) / frame.heightBeam;
+            frame.effHeight = sum(...
+                frame.masses .* frame.dispShape .* frame.heightStorey) / ...
+                sum(frame.masses .* frame.dispShape);
             
             frame.Ec = 5000 * (frame.fc)^0.5;
             
             frame.driftCracking = frame.fct * frame.lengthBeam / ...
                 (3 * frame.heightBeam * frame.Ec);
             
-            frame.effHeight = sum(...
-                frame.masses .* frame.dispShape .* frame.heightStorey) / ...
-                sum(frame.masses .* frame.dispShape);
-            
-            frame.deltaYield = frame.driftYield * frame.effHeight;
-            
             frame.deltaCracking = frame.driftCracking * frame.effHeight;
+
+            if manualDeltaYield == 0
+                frame.driftYield = 0.5 * frame.epsYsteel * ...
+                    (frame.lengthBeam-frame.heightColumn) / frame.heightBeam;
+
+                frame.deltaYield = frame.driftYield * frame.effHeight;
+            else
+                frame.deltaYield = manualDeltaYield;
+                
+                frame.driftYield = frame.deltaYield / frame.effHeight;
+            end
             
             % put back the original variable
             self.parameters.Frame = frame;
