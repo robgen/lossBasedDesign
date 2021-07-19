@@ -69,7 +69,7 @@ classdef lossBasedDesign
             self = setDSthresholds(self);
             self = getFragilityVulnerability(self, GPfullFit);
             self = getEAL(self);
-            
+            self = destroyDesignCandidates(self);
         end
         
         
@@ -111,6 +111,17 @@ classdef lossBasedDesign
             self.isCandidate = reshape(...
                 self.isCANDIDATE, numel(self.isCANDIDATE), 1);
             
+        end
+        
+        
+        function self = destroyDesignCandidates(self)
+            self.isEALTARGET = [];
+            self.CDRs = [];
+            self.indCANDIDATE = [];
+            self.pushCandidates = [];
+            self.CDRcandidates = [];
+            self.isCANDIDATE = [];
+            self.isCandidate = [];
         end
         
         
