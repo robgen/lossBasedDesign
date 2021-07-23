@@ -15,7 +15,6 @@ classdef lossBasedDesign
         fragStDev
         
         IMdef
-        fragilities
         vulnerabilities
         
         eal
@@ -26,6 +25,7 @@ classdef lossBasedDesign
         pushCandidates
         CDRcandidates
         pushDesign
+        propDesign
         
         FY
         MU
@@ -130,8 +130,7 @@ classdef lossBasedDesign
             if nargin < 2; selectedSDoF = 1; end
             if nargin < 3; comparativePush = 0; end
             
-            self.isDesign = selectedSDoF;
-            self.pushDesign = self.pushCandidates{selectedSDoF};
+            self = collectDesignProperties(self, selectedSDoF);
             
             colDS 	= [ 0.392156862745098   0.831372549019608   0.074509803921569
                 1.00 1.00 0.07
@@ -160,7 +159,8 @@ classdef lossBasedDesign
             candPlot(self.isDesign).LineWidth = 2;
             
             if size(comparativePush,1) ~= 1
-                plot(comparativePush(:,1), comparativePush(:,2), ...
+                plot(comparativePush(:,1), ...
+                    comparativePush(:,2)/self.parameters.Frame.effMass/9.81, ...
                     'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
                     'DisplayName', 'Comparative');
             end
@@ -307,9 +307,7 @@ classdef lossBasedDesign
         
         
         function plotEAL(self)
-            
-            self = refreshDesignValue(self);
-            
+                        
             figure('Position', [271   256   560   420]);
             p(1) = surf(self.FY, self.MU, self.EAL, 'FaceAlpha', 0.8, ...
                 'FaceColor',[0.94 0.94 0.94], ...
@@ -339,13 +337,27 @@ classdef lossBasedDesign
         end
         
         
-        function plotFrameMemberDetailing(self)
+        function plotFrameMemberDetailing(self, comparativePush)
+            
+            if nargin < 2; comparativePush = 0; end
             
             frame = self.parameters.Frame;
             
-            figure('Position', [274   527   560   420]);
+            figure('Position', [274   527   560   420]); hold on
             plot(self.pushDesign(:,1), self.pushDesign(:,2) * ...
                 frame.effMass*9.81, 'k', 'LineWidth',2)
+            
+            deltaDS = self.propDesign.deltaY * ...
+                self.ductThresholds(self.propDesign.index,:);
+            scatter(deltaDS, interp1(self.pushDesign(:,1), ...
+                self.pushDesign(:,2)*frame.effMass*9.81, deltaDS), ...
+                50, 'k', 'filled')
+            
+            if size(comparativePush,1) ~= 1
+                plot(comparativePush(:,1), comparativePush(:,2), 'o-', ...
+                    'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
+                    'DisplayName', 'Comparative');
+            end
             ylabel('Force [KN]'); box off
             xlabel('Displacement @H_{eff} [m]');
             title('Capacity curve');
@@ -574,9 +586,33 @@ classdef lossBasedDesign
         end
         
         
-        function self = refreshDesignValue(self)
+        function self = collectDesignProperties(self, selectedSDoF)
             
+            self.isDesign = selectedSDoF;
+            self.pushDesign = self.pushCandidates{selectedSDoF};
+            
+            self.propDesign.deltaY = self.pushDesign(2,1);
+            self.propDesign.fy = self.FY(self.indCANDIDATE==selectedSDoF);
+            self.propDesign.mu = self.MU(self.indCANDIDATE==selectedSDoF);
+            self.propDesign.t =  self.T(self.indCANDIDATE==selectedSDoF);
+            
+            n = find(self.indCANDIDATE==selectedSDoF);
+            self.propDesign.fragMedian = self.fragMedian(n,:);
+            self.propDesign.fragStDev = self.fragStDev(n,:);
+            self.propDesign.index = n;
+            
+            for ds = size(self.fragMedian,2) : -1 : 1
+                self.propDesign.fragilities(:,ds) = logncdf(self.IMdef,...
+                    log(self.propDesign.fragMedian(ds)), ...
+                    self.propDesign.fragStDev(ds));
+            end
+            
+            self.propDesign.vulnerability = VULNERABILITYbuilding(...
+                [self.IMdef, self.propDesign.fragilities], ...
+                self.parameters.FragVuln.damageToLoss, 'NOplot');
         end
+        
+        
     end
 end
 
