@@ -55,7 +55,8 @@ classdef lossBasedDesign
             if nargin < 1, options = struct; end
             self = setAllParameters(self, options);
             
-            self.IMdef = linspace(0, self.parameters.FragVuln.maxIM, 1000)';
+            self.IMdef = linspace(0, self.parameters.FragVuln.maxIM, ...
+                self.parameters.FragVuln.samplesIM)';
             
         end
         
@@ -386,9 +387,14 @@ classdef lossBasedDesign
                 GPfullFit.predictFragGP(...
                 self.hyst, self.t, self.fy, self.hard, self.ductThresholds);
             
-            self.fragStDev = ( (dummyStDev(:,end) * ...
-                ones(1,size(self.ductThresholds,2))).^2 + ...
-                self.parameters.FragVuln.betaSDoFtoMDoF.^2 ) .^ 0.5;
+            if isnan(self.parameters.FragVuln.fixedBeta)
+                self.fragStDev = ( (dummyStDev(:,end) * ...
+                    ones(1,size(self.ductThresholds,2))).^2 + ...
+                    self.parameters.FragVuln.betaSDoFtoMDoF.^2 ) .^ 0.5;
+            else
+                self.fragStDev = ones(size(dummyStDev)) * ...
+                    self.parameters.FragVuln.fixedBeta;
+            end
             
             if any(self.isExtrapolated==1)
                 warning('Extrapolation: some Seed SDoF exceeds the limits of the GP')
@@ -446,8 +452,8 @@ classdef lossBasedDesign
                 'fyBounds', 'muBounds', 'minCDR'};
             microFieldsParVals{1} = { 0.01, 0.1, 'MTf', [0.15 0.4], [1.5 6], [1 1 1 1] };
             
-            microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'maxIM'};
-            microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, 2.5};
+            microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'fixedBeta', 'maxIM', 'samplesIM'};
+            microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5, 1000};
             
             microFieldsPar{3} = {'faultRate', 'periodsHazard', 'MAFEhazard', 'intensityHazard', 'codeSpectra' };
             microFieldsParVals{3} = { 0.58, [0,0.1,0.15,0.2,0.3,0.4,0.5,0.75,1,1.5,2], ...
