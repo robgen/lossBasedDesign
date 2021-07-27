@@ -13,6 +13,7 @@ classdef lossBasedDesign
         ductThresholds
         fragMedian
         fragStDev
+        powerLaw
         
         IMdef
         vulnerabilities
@@ -55,7 +56,8 @@ classdef lossBasedDesign
             if nargin < 1, options = struct; end
             self = setAllParameters(self, options);
             
-            self.IMdef = linspace(0, self.parameters.FragVuln.maxIM, 1000)';
+            self.IMdef = linspace(0, self.parameters.FragVuln.maxIM, ...
+                self.parameters.FragVuln.samplesIM)';
             
         end
         
@@ -382,7 +384,7 @@ classdef lossBasedDesign
         
         function self = getFragilityVulnerability(self, GPfullFit)
             
-            [self.fragMedian, dummyStDev, ~, self.isExtrapolated] = ...
+            [self.fragMedian, dummyStDev, self.powerLaw, self.isExtrapolated] = ...
                 GPfullFit.predictFragGP(...
                 self.hyst, self.t, self.fy, self.hard, self.ductThresholds);
             
@@ -391,7 +393,8 @@ classdef lossBasedDesign
                     ones(1,size(self.ductThresholds,2))).^2 + ...
                     self.parameters.FragVuln.betaSDoFtoMDoF.^2 ) .^ 0.5;
             else
-                self.fragStDev = ones(size(dummyStDev)) * fixedBeta;
+                self.fragStDev = ones(size(dummyStDev)) * ...
+                    self.parameters.FragVuln.fixedBeta;
             end
             
             if any(self.isExtrapolated==1)
@@ -450,8 +453,8 @@ classdef lossBasedDesign
                 'fyBounds', 'muBounds', 'minCDR'};
             microFieldsParVals{1} = { 0.01, 0.1, 'MTf', [0.15 0.4], [1.5 6], [1 1 1 1] };
             
-            microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'fixedBeta', 'maxIM'};
-            microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5};
+            microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'fixedBeta', 'maxIM', 'samplesIM'};
+            microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5, 1000};
             
             microFieldsPar{3} = {'faultRate', 'periodsHazard', 'MAFEhazard', 'intensityHazard', 'codeSpectra' };
             microFieldsParVals{3} = { 0.58, [0,0.1,0.15,0.2,0.3,0.4,0.5,0.75,1,1.5,2], ...
@@ -519,6 +522,10 @@ classdef lossBasedDesign
                     frame.heightStorey/frame.heightStorey(end) .* ...
                     (1-frame.heightStorey/(4*frame.heightStorey(end))) ;
             end            
+            
+            frame.driftShape = ...
+                (frame.dispShape - [0; frame.dispShape(1:end-1)]) ./ ...
+                frame.heightInterstorey;
             
             frame.effHeight = sum(...
                 frame.masses .* frame.dispShape .* frame.heightStorey) / ...
@@ -601,6 +608,22 @@ classdef lossBasedDesign
             self.propDesign.t =  self.T(self.indCANDIDATE==selectedSDoF);
             
             n = find(self.indCANDIDATE==selectedSDoF);
+            
+%             self.propDesign.driftThresholds = ...
+%                 max(self.parameters.Frame.driftProfileNC) .* ...
+%                 self.ductThresholds(n,:) / self.ductThresholds(n,end);
+
+            dEff = sum(...
+                self.parameters.Frame.masses .* ...
+                self.parameters.Frame.dispShape .^ 2) / ...
+                sum(self.parameters.Frame.masses .* ...
+                self.parameters.Frame.dispShape);
+            
+            self.propDesign.driftThresholds = ...
+                max(self.parameters.Frame.driftShape) .* ...
+                self.ductThresholds(n,:) * ...
+                self.parameters.Frame.deltaYield / dEff;
+            
             self.propDesign.fragMedian = self.fragMedian(n,:);
             self.propDesign.fragStDev = self.fragStDev(n,:);
             self.propDesign.index = n;

@@ -13,6 +13,7 @@ classdef lossBasedDesign
         ductThresholds
         fragMedian
         fragStDev
+        powerLaw
         
         IMdef
         vulnerabilities
@@ -383,7 +384,7 @@ classdef lossBasedDesign
         
         function self = getFragilityVulnerability(self, GPfullFit)
             
-            [self.fragMedian, dummyStDev, ~, self.isExtrapolated] = ...
+            [self.fragMedian, dummyStDev, self.powerLaw, self.isExtrapolated] = ...
                 GPfullFit.predictFragGP(...
                 self.hyst, self.t, self.fy, self.hard, self.ductThresholds);
             
@@ -522,6 +523,10 @@ classdef lossBasedDesign
                     (1-frame.heightStorey/(4*frame.heightStorey(end))) ;
             end            
             
+            frame.driftShape = ...
+                (frame.dispShape - [0; frame.dispShape(1:end-1)]) ./ ...
+                frame.heightInterstorey;
+            
             frame.effHeight = sum(...
                 frame.masses .* frame.dispShape .* frame.heightStorey) / ...
                 sum(frame.masses .* frame.dispShape);
@@ -603,6 +608,18 @@ classdef lossBasedDesign
             self.propDesign.t =  self.T(self.indCANDIDATE==selectedSDoF);
             
             n = find(self.indCANDIDATE==selectedSDoF);
+            
+            dEff = sum(...
+                self.parameters.Frame.masses .* ...
+                self.parameters.Frame.dispShape .^ 2) / ...
+                sum(self.parameters.Frame.masses .* ...
+                self.parameters.Frame.dispShape);
+            
+            self.propDesign.driftThresholds = ...
+                max(self.parameters.Frame.driftShape) .* ...
+                self.ductThresholds(n,:) * ...
+                self.parameters.Frame.deltaYield / dEff;
+            
             self.propDesign.fragMedian = self.fragMedian(n,:);
             self.propDesign.fragStDev = self.fragStDev(n,:);
             self.propDesign.index = n;
