@@ -86,12 +86,19 @@ classdef lossBasedDesign
             
             deltaY = self.parameters.Frame.deltaYield;
             self.CDRs = NaN(numel(self.FY),size(self.fragMedian,2));
+            
+            self.indCANDIDATE = zeros(size(self.T));
+            
             k = 0;
             for n = 1 : numel(self.isEALTARGET)
                 if self.isEALTARGET(n)
                     k = k + 1;
                     [row,col] = ind2sub(size(self.FY), n);
                     self.indCANDIDATE(row,col) = k;
+                    
+                    if n == 2376
+                        a = 0;
+                    end
                     
                     self.pushCandidates{k} = [[0 1 self.MU(n)]'*deltaY, ...
                         [0 self.FY(n) self.FU(n)]'];
