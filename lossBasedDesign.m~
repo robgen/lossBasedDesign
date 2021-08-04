@@ -20,11 +20,13 @@ classdef lossBasedDesign
         
         eal
         CDRs
+        mafeDS
         
         isCandidate
         isDesign = 1;
         pushCandidates
         CDRcandidates
+        MAFEdsCandidates
         pushDesign
         propDesign
         
@@ -75,6 +77,26 @@ classdef lossBasedDesign
         end
         
         
+        function self = getSeedMAFEds(self)
+            
+            haz = self.parameters.Hazard;
+            
+            for n = numel(self.fy): -1 : 1
+                
+                for l = size(haz.intensityHazard,1) : -1 : 1
+                    intHaz(l) = interp1(haz.periodsHazard, ...
+                        haz.intensityHazard(l,:), self.t(n));
+                end
+                
+                hazCurve = [0, haz.faultRate; ...
+                    intHaz', haz.MAFEhazard(:)];
+                
+                self.mafeDS(n,:) = self.calculateMAFEds(self.fragMedian(n,:), ...
+                    self.fragStDev(n,:), hazCurve);
+            end
+        end
+        
+        
         function self = getDesignCandidates(self, EALtarget)
             
             self.isEALTARGET = abs(self.EAL - EALtarget) <= ...
@@ -87,7 +109,7 @@ classdef lossBasedDesign
             deltaY = self.parameters.Frame.deltaYield;
             self.CDRs = NaN(numel(self.FY),size(self.fragMedian,2));
             
-            self.indCANDIDATE = zeros(size());
+            self.indCANDIDATE = zeros(size(self.T));
             
             k = 0;
             for n = 1 : numel(self.isEALTARGET)
@@ -96,9 +118,7 @@ classdef lossBasedDesign
                     [row,col] = ind2sub(size(self.FY), n);
                     self.indCANDIDATE(row,col) = k;
                     
-                    if n == 2376
-                        a = 0;
-                    end
+                    self.MAFEdsCandidates(k,:) = self.mafeDS(n,:);
                     
                     self.pushCandidates{k} = [[0 1 self.MU(n)]'*deltaY, ...
                         [0 self.FY(n) self.FU(n)]'];
@@ -343,6 +363,41 @@ classdef lossBasedDesign
             zlabel('EAL [%]')
             set(gca, 'FontSize', 18)
             
+        end
+        
+        
+        function plotMAFEds(self)
+            
+            colDS 	= [ 0.392   0.831   0.074
+                        1.00    1.00    0.07
+                        0.929   0.694   0.125
+                        0.635   0.078   0.184];
+        
+            figure('Position', [271   256   560   420]);
+            for ds = 1 : size(self.mafeDS,2)
+                surf(self.FY, self.MU, ...
+                    reshape(self.mafeDS(:,ds), size(self.FY,1), size(self.FY,2)), ...
+                    'FaceAlpha', 0.8, 'FaceColor',colDS(ds,:), ...
+                    'DisplayName', 'EAL seed SDoFs'); hold on
+            end
+            
+            for ds = 1 : size(self.mafeDS,2)
+                scatter3(self.FY(self.indCANDIDATE==self.isDesign), ...
+                    self.MU(self.indCANDIDATE==self.isDesign), ...
+                    self.mafeDS(self.indCANDIDATE==self.isDesign,ds), 1000, ...
+                    'p', 'MarkerFaceColor', [0.93,0.69,0.13], ...
+                    'MarkerEdgeColor', 'k', 'DisplayName', 'Design SDoF');
+                
+                labels{ds} = sprintf('DS%d');
+            end
+            set(gca, 'Zscale', 'log')
+            view(gca,[81.3000001847013 19.9181347341946]);
+            legend1 = legend(labels);
+            set(legend1, 'Position',[0.657691964285714 0.785714285714286 0.250892857142857 0.101190476190476] )
+            xlabel('f_y [-]')
+            ylabel('\mu_{cap} [-]')
+            zlabel('MAFE(DS) [-]')
+            set(gca, 'FontSize', 18)
         end
         
         
@@ -629,6 +684,7 @@ classdef lossBasedDesign
             
             self.propDesign.fragMedian = self.fragMedian(n,:);
             self.propDesign.fragStDev = self.fragStDev(n,:);
+            self.propDesign.MAFEds = self.mafeDS(n,:);
             self.propDesign.index = n;
             
             for ds = size(self.fragMedian,2) : -1 : 1
@@ -642,6 +698,26 @@ classdef lossBasedDesign
                 self.parameters.FragVuln.damageToLoss, 'NOplot');
         end
         
+        
+    end
+    
+    
+    methods(Static)
+        
+        function MAFEds = calculateMAFEds(fragMedians, fragStdev, hazardCurve)
+            
+            IMdef = linspace(hazardCurve(1,1), hazardCurve(end,1), 1000);
+            hazardCurveResampled = interp1(...
+                hazardCurve(:,1), hazardCurve(:,2), IMdef)';
+            
+            for ds = numel(fragMedians) : -1 : 1
+                fragilities(:,ds) = logncdf(IMdef,...
+                    log(fragMedians(ds)), fragStdev(ds));
+                
+                MAFEds(ds) = trapz(IMdef, ...
+                    fragilities(:,ds) .* hazardCurveResampled);
+            end
+        end
         
     end
 end
