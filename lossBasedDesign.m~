@@ -118,7 +118,9 @@ classdef lossBasedDesign
                     [row,col] = ind2sub(size(self.FY), n);
                     self.indCANDIDATE(row,col) = k;
                     
-                    self.MAFEdsCandidates(k,:) = self.mafeDS(n,:);
+                    if ~isempty(self.mafeDS)
+                        self.MAFEdsCandidates(k,:) = self.mafeDS(n,:);
+                    end
                     
                     self.pushCandidates{k} = [[0 1 self.MU(n)]'*deltaY, ...
                         [0 self.FY(n) self.FU(n)]'];
@@ -187,11 +189,15 @@ classdef lossBasedDesign
             candPlot(self.isDesign).Color = [0 0 0];
             candPlot(self.isDesign).LineWidth = 2;
             
-            if size(comparativePush,1) ~= 1
-                plot(comparativePush(:,1), ...
-                    comparativePush(:,2)/self.parameters.Frame.effMass/9.81, ...
-                    'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
-                    'DisplayName', 'Comparative');
+            if size(comparativePush,1) ~= 1 
+                if isfield(self.parameters.Frame, 'effMass')
+                    plot(comparativePush(:,1), ...
+                        comparativePush(:,2)/self.parameters.Frame.effMass/9.81, ...
+                        'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
+                        'DisplayName', 'Comparative');
+                else
+                    warning('Comparative pushover not plotted. Run getFrameMemberDetailing first (to get the effective mass)')
+                end
             end
             
             title(self.isDesign)
@@ -381,19 +387,20 @@ classdef lossBasedDesign
                     'DisplayName', 'EAL seed SDoFs'); hold on
             end
             
-            for ds = 1 : size(self.mafeDS,2)
+            for ds = size(self.mafeDS,2) : -1 : 1
                 scatter3(self.FY(self.indCANDIDATE==self.isDesign), ...
                     self.MU(self.indCANDIDATE==self.isDesign), ...
                     self.mafeDS(self.indCANDIDATE==self.isDesign,ds), 1000, ...
                     'p', 'MarkerFaceColor', [0.93,0.69,0.13], ...
                     'MarkerEdgeColor', 'k', 'DisplayName', 'Design SDoF');
                 
-                labels{ds} = sprintf('DS%d');
+                labels{ds} = sprintf('DS%d %1.2e', ds, ...
+                    self.mafeDS(self.indCANDIDATE==self.isDesign,ds));
             end
             set(gca, 'Zscale', 'log')
-            view(gca,[81.3000001847013 19.9181347341946]);
+            view(gca,[108.841308121894 21.7774611928815]);
             legend1 = legend(labels);
-            set(legend1, 'Position',[0.657691964285714 0.785714285714286 0.250892857142857 0.101190476190476] )
+            set(legend1, 'Position', [0.157 0.222 0.252 0.194] )
             xlabel('f_y [-]')
             ylabel('\mu_{cap} [-]')
             zlabel('MAFE(DS) [-]')
@@ -494,7 +501,7 @@ classdef lossBasedDesign
                 
                 self.EAL(row,col) = EALcalculator(...
                     [self.IMdef self.vulnerabilities(:,n)], ...
-                    hazCurve, 'NOplot') * 100;
+                    hazCurve, 'NOplot') * 100;                
             end
             
         end
@@ -677,10 +684,16 @@ classdef lossBasedDesign
                 sum(self.parameters.Frame.masses .* ...
                 self.parameters.Frame.dispShape);
             
+            self.propDesign.dispThresholds = ...
+                self.ductThresholds(n,:) * ...
+                self.parameters.Frame.deltaYield;
+            
             self.propDesign.driftThresholds = ...
                 max(self.parameters.Frame.driftShape) .* ...
                 self.ductThresholds(n,:) * ...
                 self.parameters.Frame.deltaYield / dEff;
+            
+            self.propDesign.psdm = self.powerLaw(n,:);
             
             self.propDesign.fragMedian = self.fragMedian(n,:);
             self.propDesign.fragStDev = self.fragStDev(n,:);
@@ -719,6 +732,55 @@ classdef lossBasedDesign
             end
         end
         
+        
+        function out = allCalculationsOneCase(GPfullFit, ...
+                capCurveBil, hysteresis, dispThresholds, DLR, hazard, ...
+                fixedBeta)
+            % NOTE: violates good-code principles
+            
+            if nargin < 7; fixedBeta = NaN; end
+            
+            out.deltaY = capCurveBil(2,1);
+            out.deltaU = capCurveBil(3,1);
+            fY = capCurveBil(2,2);
+            fU = capCurveBil(3,2);
+            T = 2*pi * (out.deltaY ./ (fY*9.81)).^0.5;
+            hard = (fU-fY)/(out.deltaU-out.deltaY) / (fY/out.deltaY);
+            ductThresholds = dispThresholds ./ out.deltaY;
+            
+            [out.fragMedian, dummyStDev, out.powerLaw, out.isExtrapolated] = ...
+                GPfullFit.predictFragGP(hysteresis, T, fY, hard, ductThresholds);
+            
+            if isnan(fixedBeta)
+                out.fragStDev = dummyStDev;
+            else
+                out.fragStDev = ones(size(dummyStDev)) * fixedBeta;
+            end
+            
+            if any(out.isExtrapolated==1)
+                warning('Extrapolation: some Seed SDoF exceeds the limits of the GP')
+            end
+            
+            IMdef = linspace(0, 2.5, 100)';
+            for ds = size(out.fragMedian,2) : -1 : 1
+                out.fragilities(:,ds) = logncdf(IMdef,...
+                    log(out.fragMedian(ds)), out.fragStDev(ds));
+            end
+            out.vulnerability = VULNERABILITYbuilding(...
+                [IMdef, out.fragilities], DLR, 'NOplot');
+                        
+                
+                for l = size(hazard.intensityHazard,1) : -1 : 1
+                    intHaz(l) = interp1(hazard.periodsHazard, ...
+                        hazard.intensityHazard(l,:), T);
+                end
+                
+                hazCurve = [0, hazard.faultRate; ...
+                    intHaz', hazard.MAFEhazard(:)];
+                
+                out.EAL = EALcalculator(...
+                    out.vulnerability, hazCurve, 'NOplot') * 100;                
+        end
     end
 end
 

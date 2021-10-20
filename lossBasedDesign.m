@@ -118,7 +118,9 @@ classdef lossBasedDesign
                     [row,col] = ind2sub(size(self.FY), n);
                     self.indCANDIDATE(row,col) = k;
                     
-                    self.MAFEdsCandidates(k,:) = self.mafeDS(n,:);
+                    if ~isempty(self.mafeDS)
+                        self.MAFEdsCandidates(k,:) = self.mafeDS(n,:);
+                    end
                     
                     self.pushCandidates{k} = [[0 1 self.MU(n)]'*deltaY, ...
                         [0 self.FY(n) self.FU(n)]'];
@@ -187,11 +189,15 @@ classdef lossBasedDesign
             candPlot(self.isDesign).Color = [0 0 0];
             candPlot(self.isDesign).LineWidth = 2;
             
-            if size(comparativePush,1) ~= 1
-                plot(comparativePush(:,1), ...
-                    comparativePush(:,2)/self.parameters.Frame.effMass/9.81, ...
-                    'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
-                    'DisplayName', 'Comparative');
+            if size(comparativePush,1) ~= 1 
+                if isfield(self.parameters.Frame, 'effMass')
+                    plot(comparativePush(:,1), ...
+                        comparativePush(:,2)/self.parameters.Frame.effMass/9.81, ...
+                        'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
+                        'DisplayName', 'Comparative');
+                else
+                    warning('Comparative pushover not plotted. Run getFrameMemberDetailing first (to get the effective mass)')
+                end
             end
             
             title(self.isDesign)
@@ -495,7 +501,7 @@ classdef lossBasedDesign
                 
                 self.EAL(row,col) = EALcalculator(...
                     [self.IMdef self.vulnerabilities(:,n)], ...
-                    hazCurve, 'NOplot') * 100;
+                    hazCurve, 'NOplot') * 100;                
             end
             
         end
@@ -687,6 +693,8 @@ classdef lossBasedDesign
                 self.ductThresholds(n,:) * ...
                 self.parameters.Frame.deltaYield / dEff;
             
+            self.propDesign.psdm = self.powerLaw(n,:);
+            
             self.propDesign.fragMedian = self.fragMedian(n,:);
             self.propDesign.fragStDev = self.fragStDev(n,:);
             self.propDesign.MAFEds = self.mafeDS(n,:);
@@ -724,6 +732,55 @@ classdef lossBasedDesign
             end
         end
         
+        
+        function out = allCalculationsOneCase(GPfullFit, ...
+                capCurveBil, hysteresis, dispThresholds, DLR, hazard, ...
+                fixedBeta)
+            % NOTE: this fx violates good-code principles
+            
+            if nargin < 7; fixedBeta = NaN; end
+            
+            out.deltaY = capCurveBil(2,1);
+            out.deltaU = capCurveBil(3,1);
+            out.fY = capCurveBil(2,2);
+            out.fU = capCurveBil(3,2);
+            out.T = 2*pi * (out.deltaY ./ (out.fY*9.81)).^0.5;
+            out.hard = (out.fU-out.fY)/(out.deltaU-out.deltaY) / (out.fY/out.deltaY);
+            ductThresholds = dispThresholds ./ out.deltaY;
+            
+            [out.fragMedian, dummyStDev, out.powerLaw, out.isExtrapolated] = ...
+                GPfullFit.predictFragGP(...
+                hysteresis, out.T, out.fY, out.hard, ductThresholds);
+            
+            if isnan(fixedBeta)
+                out.fragStDev = ones(size(dummyStDev)) * dummyStDev(end);
+            else
+                out.fragStDev = ones(size(dummyStDev)) * fixedBeta;
+            end
+            
+            if any(out.isExtrapolated==1)
+                warning('Extrapolation: some Seed SDoF exceeds the limits of the GP')
+            end
+            
+            IMdef = linspace(0, 2.5, 100)';
+            for ds = size(out.fragMedian,2) : -1 : 1
+                out.fragilities(:,ds) = logncdf(IMdef,...
+                    log(out.fragMedian(ds)), out.fragStDev(ds));
+            end
+            out.vulnerability = VULNERABILITYbuilding(...
+                [IMdef, out.fragilities], DLR, 'NOplot');
+            
+            for l = size(hazard.intensityHazard,1) : -1 : 1
+                intHaz(l) = interp1(hazard.periodsHazard, ...
+                    hazard.intensityHazard(l,:), out.T);
+            end
+            
+            hazCurve = [0, hazard.faultRate; ...
+                intHaz', hazard.MAFEhazard(:)];
+            
+            out.EAL = EALcalculator(...
+                out.vulnerability, hazCurve, 'NOplot') * 100;
+        end
     end
 end
 
