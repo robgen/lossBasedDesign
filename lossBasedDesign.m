@@ -477,8 +477,13 @@ classdef lossBasedDesign
                 end
                 vulnerability = VULNERABILITYbuilding(...
                     [self.IMdef, fragilities], ...
-                    self.parameters.FragVuln.damageToLoss, 'NOplot');
-                self.vulnerabilities(:,n) = vulnerability(:,2);
+                    self.parameters.FragVuln.damageToLoss, 'NOplot', ...
+                    'S_{a}(T_{1}) [g]', 0, ...
+                    self.parameters.FragVuln.fxIndLoss, ...
+                    self.parameters.FragVuln.parIndLoss);
+                
+                self.vulnerabilities(:,n) = ...
+                    vulnerability(:,2) + vulnerability(:,3);
             end
         end
         
@@ -509,7 +514,6 @@ classdef lossBasedDesign
         
     end
     
-    
     methods(Access = 'private')
         
         function self = setAllParameters(self, options)
@@ -522,8 +526,8 @@ classdef lossBasedDesign
                 'fyBounds', 'muBounds', 'minCDR'};
             microFieldsParVals{1} = { 0.01, 0.1, 'MTf', [0.15 0.4], [1.5 6], [1 1 1 1] };
             
-            microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'fixedBeta', 'maxIM', 'samplesIM'};
-            microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5, 1000};
+            microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'fixedBeta', 'maxIM', 'samplesIM', 'fxIndLoss', 'parIndLoss'};
+            microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5, 1000, @(Ldir, parIndLoss)zeros(size(Ldir)), [1.5, 0.1]};
             
             microFieldsPar{3} = {'faultRate', 'periodsHazard', 'MAFEhazard', 'intensityHazard', 'codeSpectra' };
             microFieldsParVals{3} = { 0.58, [0,0.1,0.15,0.2,0.3,0.4,0.5,0.75,1,1.5,2], ...
@@ -714,7 +718,6 @@ classdef lossBasedDesign
         
     end
     
-    
     methods(Static)
         
         function MAFEds = calculateMAFEds(fragMedians, fragStdev, hazardCurve)
@@ -735,10 +738,10 @@ classdef lossBasedDesign
         
         function out = allCalculationsOneCase(GPfullFit, ...
                 capCurveBil, hysteresis, dispThresholds, DLR, hazard, ...
-                fixedBeta)
+                fxIndLoss, parIndLoss, fixedBeta)
             % NOTE: this fx violates good-code principles
             
-            if nargin < 7; fixedBeta = NaN; end
+            if nargin < 9; fixedBeta = NaN; end
             
             out.deltaY = capCurveBil(2,1);
             out.deltaU = capCurveBil(3,1);
@@ -762,25 +765,27 @@ classdef lossBasedDesign
                 warning('Extrapolation: some Seed SDoF exceeds the limits of the GP')
             end
             
-            IMdef = linspace(0, 2.5, 100)';
+            out.IMdef = linspace(0, 2.5, 100)';
             for ds = size(out.fragMedian,2) : -1 : 1
-                out.fragilities(:,ds) = logncdf(IMdef,...
+                out.fragilities(:,ds) = logncdf(out.IMdef,...
                     log(out.fragMedian(ds)), out.fragStDev(ds));
             end
             out.vulnerability = VULNERABILITYbuilding(...
-                [IMdef, out.fragilities], DLR, 'NOplot');
+                [out.IMdef, out.fragilities], DLR, 'NOplot', ...
+                'S_{a}(T_{1}) [g]', 0, fxIndLoss, parIndLoss);
             
             for l = size(hazard.intensityHazard,1) : -1 : 1
                 intHaz(l) = interp1(hazard.periodsHazard, ...
                     hazard.intensityHazard(l,:), out.T);
             end
             
-            hazCurve = [0, hazard.faultRate; ...
+            out.hazCurve = [0, hazard.faultRate; ...
                 intHaz', hazard.MAFEhazard(:)];
             
-            out.EAL = EALcalculator(...
-                out.vulnerability, hazCurve, 'NOplot') * 100;
+            out.EAL = EALcalculator([out.vulnerability(:,1) ...
+                out.vulnerability(:,2)+out.vulnerability(:,3)], ...
+                out.hazCurve, 'NOplot') * 100;
         end
     end
+    
 end
-
