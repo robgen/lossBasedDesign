@@ -2,6 +2,7 @@ classdef lossBasedDesign
     %lossBasedDesign
     
     properties
+        structureType
         EALtarget
         parameters
         
@@ -53,9 +54,12 @@ classdef lossBasedDesign
     
     methods % macro-methods
         
-        function self = lossBasedDesign(options)
+        function self = lossBasedDesign(structureType, options)
             
-            if nargin < 1, options = struct; end
+            if nargin < 1, structureType = 'Frame'; end
+            if nargin < 2, options = struct; end
+            
+            self.structureType = structureType;
             self = setAllParameters(self, options);
             
             self.IMdef = linspace(0, self.parameters.FragVuln.maxIM, ...
@@ -68,7 +72,7 @@ classdef lossBasedDesign
             
             if nargin < 3; manualDeltaYield = 0; end
             
-            self = frameDBDgeneral(self, manualDeltaYield);
+            self = DBDgeneral(self, manualDeltaYield);
             self = setSeedSDoFproperties(self);
             self = setDSthresholds(self);
             self = getFragilityVulnerability(self, GPfullFit);
@@ -229,6 +233,11 @@ classdef lossBasedDesign
         end
         
         
+        function self = getDetailing(self)
+            
+        end
+        
+        
         function self = getFrameMemberDetailing(self)
             
             frame = self.parameters.Frame;
@@ -338,6 +347,15 @@ classdef lossBasedDesign
                 frame.heightInterstorey(1) * frame.gammaMomentCols;
             
             self.parameters.Frame = frame;
+        end
+        
+        
+        function self = getWallMemberDetailing(self)
+            wall = self.parameters.Wall;
+            
+            
+            
+            self.parameters.Wall = wall;
         end
         
         
@@ -509,14 +527,13 @@ classdef lossBasedDesign
         
     end
     
-    
     methods(Access = 'private')
         
         function self = setAllParameters(self, options)
             % setAllParameters deals with the optional parameters
                         
             % build basic parameters
-            macroFieldsPar = {'SDoF', 'FragVuln', 'Hazard', 'Frame'};
+            macroFieldsPar = {'SDoF', 'FragVuln', 'Hazard', 'Frame', 'Wall'};
             
             microFieldsPar{1} = {'toleranceEAL', 'hardening', 'hysteresis', ...
                 'fyBounds', 'muBounds', 'minCDR'};
@@ -540,6 +557,10 @@ classdef lossBasedDesign
             microFieldsParVals{4} = {25 1.2 300/200000, 6, 0.55, 0.6, 4, 300, ...
                 4, 3, 3.6, 0.6, 4};
             
+            microFieldsPar{5} = {'fc' 'epsYsteel', 'lengthWall', 'Nparallel', ...
+                'masses', 'Nstoreys', 'heightInterstorey'};
+            microFieldsParVals{5} = {25 300/200000, 4, 2, 300, 4, 3.6};
+            
             for F = 1 : numel(macroFieldsPar)
                 for f = 1 : numel(microFieldsPar{F})
                     self.parameters.(macroFieldsPar{F}).(microFieldsPar{F}{f}) = ...
@@ -562,66 +583,19 @@ classdef lossBasedDesign
         end
         
         
-        function self = frameDBDgeneral(self, manualDeltaYield)
+        function self = DBDgeneral(self, manualDeltaYield)
             
-            if nargin < 2; manualDeltaYield = 0; end
-            
-            % shorten the variable name
-            frame = self.parameters.Frame;
-            
-            if numel(frame.heightInterstorey) == 1
-                frame.heightInterstorey = frame.heightInterstorey * ...
-                    ones(frame.Nstoreys,1);
+            switch self.structureType
+                case 'Frame'
+                    self.parameters.Frame = self.frameDBDgeneral(...
+                        self.parameters.Frame, manualDeltaYield);
+                    
+                case 'Wall'
+                    
             end
             
-            if numel(frame.masses) == 1
-                frame.masses = frame.masses * ...
-                    ones(frame.Nstoreys,1);
-            end
-            
-            frame.heightStorey = cumsum(frame.heightInterstorey);
-            
-            higherModes = min( 1 , 1.15 - 0.0034*frame.heightStorey(end));
-            
-            if frame.Nstoreys<=4
-                frame.dispShape = higherModes * ...
-                    frame.heightStorey/frame.heightStorey(end);
-            else
-                frame.dispShape = higherModes * 4/3 .* ...
-                    frame.heightStorey/frame.heightStorey(end) .* ...
-                    (1-frame.heightStorey/(4*frame.heightStorey(end))) ;
-            end            
-            
-            frame.driftShape = ...
-                (frame.dispShape - [0; frame.dispShape(1:end-1)]) ./ ...
-                frame.heightInterstorey;
-            
-            frame.effHeight = sum(...
-                frame.masses .* frame.dispShape .* frame.heightStorey) / ...
-                sum(frame.masses .* frame.dispShape);
-            
-            frame.Ec = 5000 * (frame.fc)^0.5;
-            
-            frame.driftCracking = frame.fct * frame.lengthBeam / ...
-                (3 * frame.heightBeam * frame.Ec);
-            
-            frame.deltaCracking = frame.driftCracking * frame.effHeight;
-
-            if manualDeltaYield == 0
-                frame.driftYield = 0.5 * frame.epsYsteel * ...
-                    (frame.lengthBeam-frame.heightColumn) / frame.heightBeam;
-
-                frame.deltaYield = frame.driftYield * frame.effHeight;
-            else
-                frame.deltaYield = manualDeltaYield;
-                
-                frame.driftYield = frame.deltaYield / frame.effHeight;
-            end
-            
-            % put back the original variable
-            self.parameters.Frame = frame;
         end
-        
+                        
         
         function self = setSeedSDoFproperties(self)
             
@@ -714,7 +688,6 @@ classdef lossBasedDesign
         
     end
     
-    
     methods(Static)
         
         function MAFEds = calculateMAFEds(fragMedians, fragStdev, hazardCurve)
@@ -736,23 +709,24 @@ classdef lossBasedDesign
         function out = allCalculationsOneCase(GPfullFit, ...
                 capCurveBil, hysteresis, dispThresholds, DLR, hazard, ...
                 fixedBeta)
-            % NOTE: violates good-code principles
+            % NOTE: this fx violates good-code principles
             
             if nargin < 7; fixedBeta = NaN; end
             
             out.deltaY = capCurveBil(2,1);
             out.deltaU = capCurveBil(3,1);
-            fY = capCurveBil(2,2);
-            fU = capCurveBil(3,2);
-            T = 2*pi * (out.deltaY ./ (fY*9.81)).^0.5;
-            hard = (fU-fY)/(out.deltaU-out.deltaY) / (fY/out.deltaY);
+            out.fY = capCurveBil(2,2);
+            out.fU = capCurveBil(3,2);
+            out.T = 2*pi * (out.deltaY ./ (out.fY*9.81)).^0.5;
+            out.hard = (out.fU-out.fY)/(out.deltaU-out.deltaY) / (out.fY/out.deltaY);
             ductThresholds = dispThresholds ./ out.deltaY;
             
             [out.fragMedian, dummyStDev, out.powerLaw, out.isExtrapolated] = ...
-                GPfullFit.predictFragGP(hysteresis, T, fY, hard, ductThresholds);
+                GPfullFit.predictFragGP(...
+                hysteresis, out.T, out.fY, out.hard, ductThresholds);
             
             if isnan(fixedBeta)
-                out.fragStDev = dummyStDev;
+                out.fragStDev = ones(size(dummyStDev)) * dummyStDev(end);
             else
                 out.fragStDev = ones(size(dummyStDev)) * fixedBeta;
             end
@@ -768,19 +742,84 @@ classdef lossBasedDesign
             end
             out.vulnerability = VULNERABILITYbuilding(...
                 [IMdef, out.fragilities], DLR, 'NOplot');
-                        
-                
-                for l = size(hazard.intensityHazard,1) : -1 : 1
-                    intHaz(l) = interp1(hazard.periodsHazard, ...
-                        hazard.intensityHazard(l,:), T);
-                end
-                
-                hazCurve = [0, hazard.faultRate; ...
-                    intHaz', hazard.MAFEhazard(:)];
-                
-                out.EAL = EALcalculator(...
-                    out.vulnerability, hazCurve, 'NOplot') * 100;                
+            
+            for l = size(hazard.intensityHazard,1) : -1 : 1
+                intHaz(l) = interp1(hazard.periodsHazard, ...
+                    hazard.intensityHazard(l,:), out.T);
+            end
+            
+            hazCurve = [0, hazard.faultRate; ...
+                intHaz', hazard.MAFEhazard(:)];
+            
+            out.EAL = EALcalculator(...
+                out.vulnerability, hazCurve, 'NOplot') * 100;
         end
+        
+        
+        function frame = frameDBDgeneral(frame, manualDeltaYield)
+            
+            if nargin < 2; manualDeltaYield = 0; end
+            
+            if numel(frame.heightInterstorey) == 1
+                frame.heightInterstorey = frame.heightInterstorey * ...
+                    ones(frame.Nstoreys,1);
+            end
+            
+            if numel(frame.masses) == 1
+                frame.masses = frame.masses * ...
+                    ones(frame.Nstoreys,1);
+            end
+            
+            frame.heightStorey = cumsum(frame.heightInterstorey);
+            
+            higherModes = min( 1 , 1.15 - 0.0034*frame.heightStorey(end));
+            
+            if frame.Nstoreys<=4
+                frame.dispShape = higherModes * ...
+                    frame.heightStorey/frame.heightStorey(end);
+            else
+                frame.dispShape = higherModes * 4/3 .* ...
+                    frame.heightStorey/frame.heightStorey(end) .* ...
+                    (1-frame.heightStorey/(4*frame.heightStorey(end))) ;
+            end            
+            
+            frame.driftShape = ...
+                (frame.dispShape - [0; frame.dispShape(1:end-1)]) ./ ...
+                frame.heightInterstorey;
+            
+            frame.effHeight = sum(...
+                frame.masses .* frame.dispShape .* frame.heightStorey) / ...
+                sum(frame.masses .* frame.dispShape);
+            
+            frame.Ec = 5000 * (frame.fc)^0.5;
+            
+            frame.driftCracking = frame.fct * frame.lengthBeam / ...
+                (3 * frame.heightBeam * frame.Ec);
+            
+            frame.deltaCracking = frame.driftCracking * frame.effHeight;
+
+            if manualDeltaYield == 0
+                frame.driftYield = 0.5 * frame.epsYsteel * ...
+                    (frame.lengthBeam-frame.heightColumn) / frame.heightBeam;
+
+                frame.deltaYield = frame.driftYield * frame.effHeight;
+            else
+                frame.deltaYield = manualDeltaYield;
+                
+                frame.driftYield = frame.deltaYield / frame.effHeight;
+            end
+            
+        end
+
+        
+        function wall = wallDBDgeneral(wall, manualDeltaYield)
+            
+            if nargin < 2; manualDeltaYield = 0; end
+            
+        end
+
+        
     end
+    
 end
 
