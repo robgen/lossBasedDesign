@@ -184,9 +184,9 @@ classdef lossBasedDesign
             candPlot(self.isDesign).LineWidth = 2;
             
             if size(comparativePush,1) ~= 1 
-                if isfield(self.parameters.Frame, 'effMass')
-                    plot(comparativePush(:,1), ...
-                        comparativePush(:,2)/self.parameters.Frame.effMass/9.81, ...
+                if isfield(self.parameters.(self.structureType), 'effMass')
+                    plot(comparativePush(:,1), comparativePush(:,2) / ...
+                        self.parameters.(self.structureType).effMass/9.81, ...
                         'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
                         'DisplayName', 'Comparative');
                 else
@@ -227,7 +227,6 @@ classdef lossBasedDesign
             
             self = self.(['get' self.structureType 'MemberDetailing'])(...
                 self.pushDesign);
-            
         end
         
         
@@ -425,7 +424,7 @@ classdef lossBasedDesign
             
             microFieldsPar{1} = {'toleranceEAL', 'hardening', 'hysteresis', ...
                 'fyBounds', 'muBounds', 'minCDR'};
-            microFieldsParVals{1} = { 0.01, 0.1, 'MTf', [0.15 0.4], [1.5 6], [1 1 1 1] };
+            microFieldsParVals{1} = { 0.01, 0.05, 'MTf', [0.15 0.4], [1.5 6], [1 1 1 1] };
             
             microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'fixedBeta', 'maxIM', 'samplesIM'};
             microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5, 1000};
@@ -445,9 +444,9 @@ classdef lossBasedDesign
             microFieldsParVals{4} = {25 1.2 300/200000, 6, 0.55, 0.6, 4, 300, ...
                 4, 3, 3.6, 0.6, 4};
             
-            microFieldsPar{5} = {'fc' 'fySteel', 'avgDiamBars', 'lengthWall', 'Nparallel', ...
+            microFieldsPar{5} = {'fc' 'fySteel', 'barAvgDiam', 'lengthWall', 'Nparallel', ...
                 'masses', 'Nstoreys', 'heightInterstorey'};
-            microFieldsParVals{5} = {25 300, 20, 4, 2, 300, 4, 3.6};
+            microFieldsParVals{5} = {25, 300, 20, 4, 2, 300, 4, 3.6};
             
             for F = 1 : numel(macroFieldsPar)
                 for f = 1 : numel(microFieldsPar{F})
@@ -842,7 +841,7 @@ classdef lossBasedDesign
             assumedHeffRatio = 0.7;
             wall.plHingeLength = ...
                 0.08*assumedHeffRatio*wall.heightWall + 0.1*wall.lengthWall + ...
-                0.022*wall.fySteel*wall.avgDiamBars/1000;
+                0.022*wall.fySteel*wall.barAvgDiam/1000;
             
             wall.dispUnitPlasticCurv = wall.plHingeLength .* ...
                 wall.heightStorey;
@@ -893,7 +892,7 @@ classdef lossBasedDesign
             wall.dispProfileNC = ...
                 wall.dispProfileYield + wall.dispProfilePlasticNC;
             
-            wall.effMass  = sum(massesOneWall .* wall.dispProfileNC) / DeffNC;
+            wall.effMass = sum(massesOneWall .* wall.dispProfileNC) / DeffNC;
             wall.effHeight = ...
                 sum(massesOneWall .* wall.dispProfileNC .* wall.heightStorey) / ...
                 sum(massesOneWall .* wall.dispProfileNC);
