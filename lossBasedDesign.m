@@ -548,8 +548,11 @@ classdef lossBasedDesign
             
             self.propDesign.fragMedian = self.fragMedian(n,:);
             self.propDesign.fragStDev = self.fragStDev(n,:);
-            self.propDesign.MAFEds = self.mafeDS(n,:);
             self.propDesign.index = n;
+            
+            if isfield(self.propDesign, 'MAFEds')
+                self.propDesign.MAFEds = self.mafeDS(n,:);
+            end
             
             for ds = size(self.fragMedian,2) : -1 : 1
                 self.propDesign.fragilities(:,ds) = logncdf(self.IMdef,...
