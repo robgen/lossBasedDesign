@@ -24,7 +24,7 @@ plotMemberDetailing(design)
 
 % design the frame members to match the requirements of DDBD
 % create a slamasolver file
-% create the ruaumoko model from SLaMAsolver
+% create the ruaumoko model based on SLaMAsolver
 
 %% Part 3: Verification
 
