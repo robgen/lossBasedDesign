@@ -90,7 +90,8 @@ classdef lossBasedDesign
                 
                 for l = size(haz.intensityHazard,1) : -1 : 1
                     intHaz(l) = interp1(haz.periodsHazard, ...
-                        haz.intensityHazard(l,:), self.t(n));
+                        haz.intensityHazard(l,:), self.t(n), ...
+                        'linear', 'extrap');
                 end
                 
                 hazCurve = [0, haz.faultRate; ...
@@ -378,7 +379,8 @@ classdef lossBasedDesign
                 
                 for l = size(haz.intensityHazard,1) : -1 : 1
                     intHaz(l) = interp1(haz.periodsHazard, ...
-                        haz.intensityHazard(l,:), self.T(row,col));
+                        haz.intensityHazard(l,:), self.T(row,col), ...
+                        'linear', 'extrap');
                 end
                 
                 hazCurve = [0, haz.faultRate; ...
@@ -426,8 +428,8 @@ classdef lossBasedDesign
             macroFieldsPar = {'SDoF', 'FragVuln', 'Hazard', 'Frame', 'Wall'};
             
             microFieldsPar{1} = {'toleranceEAL', 'hardening', 'hysteresis', ...
-                'fyBounds', 'muBounds', 'minCDR'};
-            microFieldsParVals{1} = { 0.01, 0.05, 'MTf', [0.15 0.4], [1.5 6], [1 1 1 1] };
+                'fyBounds', 'muBounds', 'NseedsFy', 'NseedsMu', 'minCDR'};
+            microFieldsParVals{1} = { 0.01, 0.05, 'MTf', [0.15 0.4], [1.5 6], 20, 20, [1 1 1 1] };
             
             microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'fixedBeta', 'maxIM', 'samplesIM', 'fxIndLosses', 'parIndLosses'};
             microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5, 1000, @(Ldir,par)par(1)*normcdf(Ldir,0.5,par(2)), [0, 0.15]};
@@ -477,10 +479,12 @@ classdef lossBasedDesign
             
             % creates the ROWS in the matrices
             fyDummy = linspace(self.parameters.SDoF.fyBounds(1), ...
-                self.parameters.SDoF.fyBounds(2), 100)';
+                self.parameters.SDoF.fyBounds(2), ...
+                self.parameters.SDoF.NseedsFy)';
             % creates the COLS in the matrices
             muDummy = linspace(self.parameters.SDoF.muBounds(1), ...
-                self.parameters.SDoF.muBounds(2), 100)';
+                self.parameters.SDoF.muBounds(2), ...
+                self.parameters.SDoF.NseedsMu)';
             
             [self.FY, self.MU] = meshgrid(fyDummy, muDummy);
             
@@ -499,6 +503,8 @@ classdef lossBasedDesign
             
             self.fu = self.fy .* (1 + (self.mu-1).*self.hard);
             self.FU = reshape(self.fu, numel(muDummy), numel(fyDummy));
+            
+            self = checkExtrapolations(self);
             
         end
         
@@ -577,6 +583,31 @@ classdef lossBasedDesign
             self.CDRcandidates = [];
             self.isCANDIDATE = [];
             self.isCandidate = [];
+        end
+        
+        
+        function self = checkExtrapolations(self)
+                        
+            maxPeriodSeeds = max(max(self.T));
+            minPeriodSeeds = min(min(self.T));
+
+            maxPeriodHazModel = max(self.parameters.Hazard.periodsHazard);
+            minPeriodHazModel = min(self.parameters.Hazard.periodsHazard);
+            
+            if maxPeriodSeeds > maxPeriodHazModel
+                warning(['Some hazard curve is extrapolated\n' ...
+                    'Max period Seeds: %2.2fs \n' ...
+                    'Max period Hazard model: %2.2fs'], ...
+                    maxPeriodSeeds, maxPeriodHazModel)
+            end
+            
+            if minPeriodSeeds < minPeriodHazModel
+                warning(['Some hazard curve is extrapolated\n' ...
+                    'Min period Seeds: %2.2fs \n' ...
+                    'Min period Hazard model: %2.2fs'], ...
+                    minPeriodSeeds, minPeriodHazModel)
+            end
+            
         end
         
         
