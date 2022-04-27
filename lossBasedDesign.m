@@ -150,7 +150,11 @@ classdef lossBasedDesign
                 self.isCANDIDATE, numel(self.isCANDIDATE), 1);
             
         end
+<<<<<<< HEAD
         
+=======
+                
+>>>>>>> origin/development
         
         function self = selectDesignSDoF(self, selectedSDoF, comparativePush)
             
@@ -362,7 +366,11 @@ classdef lossBasedDesign
                 vulnerability = ...
                     VULNERABILITYbuilding([self.IMdef, fragilities], ...
                     self.parameters.FragVuln.damageToLoss, 'NOplot', ...
+<<<<<<< HEAD
                     'S_a(T_1)', 0, self.parameters.FragVuln.fxIndLosses, ...
+=======
+                    'dummyLabel', 0, self.parameters.FragVuln.fxIndLosses, ...
+>>>>>>> origin/development
                     self.parameters.FragVuln.parIndLosses);
                 self.vulnerabilities(:,n) = ...
                     vulnerability(:,2) + vulnerability(:,3);
@@ -434,7 +442,11 @@ classdef lossBasedDesign
             microFieldsParVals{1} = { 0.01, 0.05, 'MTf', [0.15 0.4], [1.5 6], 20, 20, [1 1 1 1] };
             
             microFieldsPar{2} = {'ductDS', 'ductDSmultiplyDS4', 'damageToLoss', 'betaSDoFtoMDoF', 'fixedBeta', 'maxIM', 'samplesIM', 'fxIndLosses', 'parIndLosses'};
+<<<<<<< HEAD
             microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5, 1000, @(Ldir,par)par(1)*normcdf(-0.2+0.4*Ldir,0,par(2)), [0, 0.15]};
+=======
+            microFieldsParVals{2} = {[0.5 1 3/4 1], [0 0 1 1], [0 7 15 50 100]/100, 0, NaN, 2.5, 1000, @(Ldir,par)par(1)*normcdf(Ldir,0.5,par(2)), [0, 0.15]};
+>>>>>>> origin/development
             
             microFieldsPar{3} = {'faultRate', 'periodsHazard', 'extrapMode', 'MAFEhazard', 'intensityHazard', 'codeSpectra' };
             microFieldsParVals{3} = { 0.58, [0,0.1,0.15,0.2,0.3,0.4,0.5,0.75,1,1.5,2], 'powerLaw', ...
@@ -610,8 +622,11 @@ classdef lossBasedDesign
                     minPeriodSeeds, minPeriodHazModel)
             end
             
+<<<<<<< HEAD
             % add something similar for fy and mu
             
+=======
+>>>>>>> origin/development
         end
         
         
@@ -1069,7 +1084,326 @@ classdef lossBasedDesign
         end
         
         
+<<<<<<< HEAD
     end
     
+=======
+    end
+    
+    %%% LRS-specific methods
+    methods % micro methods - Frame
+        
+        function self = FrameDBDgeneral(self, manualDeltaYield)
+            
+            if nargin < 2; manualDeltaYield = 0; end
+            
+            frame = self.parameters.(self.structureType);
+            
+            higherModes = min( 1 , 1.15 - 0.0034*frame.heightStorey(end));
+            
+            if frame.Nstoreys<=4
+                frame.dispShape = higherModes * ...
+                    frame.heightStorey/frame.heightStorey(end);
+            else
+                frame.dispShape = higherModes * 4/3 .* ...
+                    frame.heightStorey/frame.heightStorey(end) .* ...
+                    (1-frame.heightStorey/(4*frame.heightStorey(end))) ;
+            end            
+            
+            frame.driftShape = ...
+                (frame.dispShape - [0; frame.dispShape(1:end-1)]) ./ ...
+                frame.heightInterstorey;
+            
+            frame.effHeight = sum(...
+                frame.massesBuilding .* frame.dispShape .* frame.heightStorey) / ...
+                sum(frame.massesBuilding .* frame.dispShape);
+            
+            frame.Ec = 5000 * (frame.fc)^0.5;
+            
+            frame.driftCracking = frame.fct * frame.lengthBeam / ...
+                (3 * frame.heightBeam * frame.Ec);
+            
+            frame.deltaCracking = frame.driftCracking * frame.effHeight;
+            
+            if manualDeltaYield == 0
+                frame.driftYield = 0.5 * frame.epsYsteel * ...
+                    (frame.lengthBeam-frame.heightColumn) / frame.heightBeam;
+
+                frame.deltaYield = frame.driftYield * frame.effHeight;
+            else
+                frame.deltaYield = manualDeltaYield;
+                
+                frame.driftYield = frame.deltaYield / frame.effHeight;
+            end
+            
+            self.parameters.(self.structureType) = frame;
+        end
+
+        
+        function self = getFrameMemberDetailing(self, pushDesign)
+
+            frame = self.parameters.(self.structureType);
+            
+            g = 9.81;
+            massesOneFrame = frame.massesBuilding/frame.Nparallel;
+            
+            DeffNC = pushDesign(3,1);
+            
+            % effective displacement related to the displacement shape
+            dEff = sum(massesOneFrame .* (frame.dispShape.^2)) / ...
+                sum(massesOneFrame .* frame.dispShape);
+            
+            frame.dispProfileNC = frame.dispShape * DeffNC/dEff;
+            
+            frame.effMass = ...
+                sum(massesOneFrame .* frame.dispProfileNC) / DeffNC;
+            
+            frame.driftProfileNC = ...
+                (frame.dispProfileNC - [0; frame.dispProfileNC(1:end-1)]) ./ ...
+                frame.heightInterstorey;
+                        
+            frame.beamDriftNC = frame.driftProfileNC / ...
+                (1 - frame.heightColumn/frame.lengthBeam);
+                        
+            frame.baseShearNC = pushDesign(3,2) * frame.effMass * g;
+            
+            frame.forceProfileNC = 0.9*frame.baseShearNC * ...
+                (massesOneFrame .* frame.dispProfileNC) ./ ...
+                sum(massesOneFrame .* frame.dispProfileNC);
+            frame.forceProfileNC(end) = ...
+                frame.forceProfileNC(end) + 0.1 * frame.baseShearNC;
+            
+            frame.shearProfileNC = ...
+                flipud(cumsum(frame.forceProfileNC(end:-1:1)));
+            
+            frame.OTM = sum(frame.forceProfileNC .* frame.heightStorey);
+            
+            Ne = ( frame.OTM - frame.baseShearNC * frame.gammaMomentCols ...
+                * frame.heightStorey(1) ) / (frame.Nbays*frame.lengthBeam);
+            
+            shearBeams = Ne * frame.shearProfileNC / sum(frame.shearProfileNC);
+            
+            frame.MbeamCentreline = shearBeams * frame.lengthBeam / 2;
+            frame.MbeamIntersectionCol = ...
+                (shearBeams * frame.lengthBeam / 2) * ...
+                (1-frame.heightColumn/frame.lengthBeam);
+
+            
+            % DESIGN CHOICE
+            % Averaging beam plastic rotation
+            if frame.limitBeams ~= 0
+                frame.beamDriftDesign = ones(frame.limitBeams(1),1) * ...
+                    mean( frame.beamDriftNC(1:frame.limitBeams(1)) ) ;
+                for j = 2:length(frame.limitBeams)
+                    frame.beamDriftDesign(end+1) = ones(...
+                        frame.limitBeams(j)-frame.limitBeams(j-1),1) * ...
+                        mean (frame.beamDriftNC(...
+                        frame.limitBeams(j-1)+1:frame.limitBeams(j))) ;
+                end
+                frame.beamDriftDesign(end+1:frame.Nstoreys) = ...
+                    ones(frame.Nstoreys-frame.limitBeams(end),1) * ...
+                    mean( frame.beamDriftNC(...
+                    frame.limitBeams(end)+1:frame.Nstoreys ) ) ;
+            else
+                frame.beamDriftDesign = frame.beamDriftNC;
+            end
+            
+            % Averaging of the beam shears and column moments 
+            if frame.limitBeams ~= 0
+                frame.beamShearDesign = ones(frame.limitBeams(1),1) * Ne * ...
+                    mean( frame.shearProfileNC(1:frame.limitBeams(1)) ) / ...
+                    sum(frame.shearProfileNC);
+                
+                for j = 2:length(frame.limitBeams)
+                    frame.beamShearDesign(end+1) = ones(...
+                        frame.limitBeams(j)-frame.limitBeams(j-1),1) * Ne * ...
+                        mean(frame.shearProfileNC(...
+                        frame.limitBeams(j-1)+1:frame.limitBeams(j))) / ...
+                        sum(frame.shearProfileNC);
+                end
+                
+                frame.beamShearDesign(end+1:frame.Nstoreys) = ones(...
+                    frame.Nstoreys-frame.limitBeams(end),1) * Ne * ...
+                    mean( frame.shearProfileNC(...
+                    frame.limitBeams(end)+1:frame.Nstoreys ) ) / ...
+                    sum(frame.shearProfileNC); 
+                frame.MbeamCentrelineDesign = ...
+                    frame.beamShearDesign * frame.lengthBeam / 2;
+                frame.MbeamIntersectionDesign = ...
+                    (frame.beamShearDesign * frame.lengthBeam / 2) * ...
+                    (1-frame.heightColumn/frame.lengthBeam);
+            else
+                frame.MbeamCentrelineDesign = frame.MbeamCentreline;
+                frame.MbeamIntersectionDesign = frame.MbeamIntersectionCol;
+            end
+
+            % n of internal columns times 2 plus 2 external columns
+            shearDistributor = (frame.Nbays-1)*2+2; 
+            frame.shearColIntDesign = frame.shearProfileNC *2 / shearDistributor;
+            frame.shearColExtDesign = frame.shearProfileNC / shearDistributor;
+
+            % Distribution of the column moments AT THE BASE
+            frame.McolExtDesign = frame.shearColExtDesign(1) * ...
+                frame.heightInterstorey(1) * frame.gammaMomentCols;
+            frame.McolIntDesign = frame.shearColIntDesign(1) * ...
+                frame.heightInterstorey(1) * frame.gammaMomentCols;      
+            
+            self.parameters.(self.structureType) = frame;
+        end
+
+        
+        function plotFrameMemberDetailing(self, dummyNotUsed) %#ok<INUSD>
+            
+            frame = self.parameters.Frame;
+            
+            annotation(gcf,'textbox',...
+                [0.441071428571428 0.140476190476191 0.45 0.230952380952386],...
+                'String',{['M_{b1} =' ...
+                sprintf('%d',round(frame.MbeamIntersectionDesign(1))) ...
+                'kNm @'  sprintf('%1.3f', frame.beamDriftDesign(1)) 'Rad'],...
+                ['M_{c,ext} = ' sprintf('%d',round(frame.McolExtDesign(1))) 'kNm'], ...
+                ['M_{c,int} = ' sprintf('%d',round(frame.McolIntDesign(1))) 'kNm']},...
+                'FontSize',18,...
+                'FontName','Helvetica Neue',...
+                'FitBoxToText','off');
+            
+        end
+        
+        
+    end
+    
+    methods % micro methods - Wall
+        
+        function self = WallDBDgeneral(self, manualDeltaYield)
+            
+            if nargin < 2; manualDeltaYield = 0; end
+            
+            wall = self.parameters.(self.structureType);
+            
+            wall.heightWall = wall.heightStorey(end);
+            
+            assumedHeffRatio = 0.7;
+            wall.plHingeLength = ...
+                0.08*assumedHeffRatio*wall.heightWall + 0.1*wall.lengthWall + ...
+                0.022*wall.fySteel*wall.barAvgDiam/1000;
+            
+            wall.dispUnitPlasticCurv = wall.plHingeLength .* ...
+                wall.heightStorey;
+            
+            wall.dEffUnitPlasticCurv = ...
+                sum(wall.massesBuilding .* (wall.dispUnitPlasticCurv.^2)) / ...
+                sum(wall.massesBuilding .* wall.dispUnitPlasticCurv);
+            
+            wall.epsYsteel = wall.fySteel / 200000;
+            
+            if manualDeltaYield == 0
+                wall.curvYield = 2 * wall.epsYsteel / wall.lengthWall;
+                wall.dispProfileYield = ...
+                    (wall.curvYield/2 * wall.heightStorey.^2) .* ...
+                    (1-wall.heightStorey/(3*wall.heightWall));
+                wall.deltaYield = sum(wall.massesBuilding .* (wall.dispProfileYield.^2)) / ...
+                    sum(wall.massesBuilding .* wall.dispProfileYield);
+            else
+                wall.deltaYield = manualDeltaYield;
+                dispUnitYieldCurv = ...
+                    (1/2 * wall.heightStorey.^2) .* ...
+                    (1-wall.heightStorey/(3*wall.heightWall));
+                dEffUnitYieldCurv = ...
+                    sum(wall.massesBuilding .* (dispUnitYieldCurv.^2)) / ...
+                    sum(wall.massesBuilding .* dispUnitYieldCurv);
+                wall.curvYield = manualDeltaYield / dEffUnitYieldCurv;
+                wall.dispProfileYield = ...
+                    (wall.curvYield/2 * wall.heightStorey.^2) .* ...
+                    (1-wall.heightStorey/(3*wall.heightWall));
+            end
+            
+            self.parameters.(self.structureType) = wall;
+        end
+        
+        
+        function self = getWallMemberDetailing(self, pushDesign)
+            
+            wall = self.parameters.(self.structureType);
+            
+            g = 9.81;
+            massesOneWall = wall.massesBuilding / wall.Nparallel;
+            
+            DeffY = pushDesign(2,1);
+            DeffNC = pushDesign(3,1);
+            
+            wall.curvPlasticNC = (DeffNC-DeffY) / wall.dEffUnitPlasticCurv;
+            wall.curvNC = wall.curvYield + wall.curvPlasticNC;
+            
+            wall.dispProfilePlasticNC = ...
+                wall.dispUnitPlasticCurv * wall.curvPlasticNC;
+            wall.dispProfileNC = ...
+                wall.dispProfileYield + wall.dispProfilePlasticNC;
+            
+            wall.effMass = sum(massesOneWall .* wall.dispProfileNC) / DeffNC;
+            wall.effHeight = ...
+                sum(massesOneWall .* wall.dispProfileNC .* wall.heightStorey) / ...
+                sum(massesOneWall .* wall.dispProfileNC);
+            
+            % equilibrium part
+            baseShearNC = pushDesign(3,2) * wall.effMass * g;
+            baseShearYield = pushDesign(2,2) * wall.effMass * g;
+            
+            wall.forceProfileNC = 0.9*baseShearNC * ...
+                (massesOneWall .* wall.dispProfileNC) / ...
+                sum(massesOneWall .* wall.dispProfileNC);
+            wall.forceProfileNC(length(wall.forceProfileNC)) = ...
+                wall.forceProfileNC(length(wall.forceProfileNC)) + ...
+                0.1 * baseShearNC;
+
+            momNC = sum(wall.forceProfileNC .* wall.heightStorey);
+            
+            warning('refactor with cumsum')
+            wall.shearStorey = zeros(wall.Nstoreys,1);
+            for i = 1 : wall.Nstoreys
+               wall.shearStorey(i) = 0;
+               for j = i : wall.Nstoreys
+                  wall.shearStorey(i) = wall.shearStorey(i) ...
+                      + wall.forceProfileNC(j);
+               end
+            end
+
+            wall.forceProfileYield = 0.9*baseShearYield * ...
+                (massesOneWall .* wall.dispProfileYield) / ...
+                sum(massesOneWall .* wall.dispProfileYield);
+            wall.forceProfileYield(length(wall.forceProfileYield)) = ...
+                wall.forceProfileYield(length(wall.forceProfileYield)) + ...
+                0.1 * baseShearYield;
+            
+            momYield = sum(wall.forceProfileYield .* wall.heightStorey);
+            
+            wall.momCurvBase = [0 0; wall.curvYield momYield; wall.curvNC momNC];
+            
+            self.parameters.(self.structureType) = wall;
+            
+        end
+        
+        
+        function plotWallMemberDetailing(self, comparativeMomCurv)
+            
+            wall = self.parameters.Wall;
+            
+            figure('Position', [835   527   560   420]); hold on
+            plot(wall.momCurvBase(:,1), wall.momCurvBase(:,2), ...
+                'k','LineWidth',2)
+            if size(comparativeMomCurv,1) ~= 1
+                plot(comparativeMomCurv(:,1), comparativeMomCurv(:,2), 'o-', ...
+                    'Color', [0.64,0.08,0.18], 'LineWidth', 2, ...
+                    'DisplayName', 'Comparative');
+            end
+            ylabel('Moment [kNm]');
+            xlabel('Curvature [Rad/m]');
+            set(gca, 'FontSize', 18)
+            
+        end
+        
+        
+    end
+    
+>>>>>>> origin/development
 end
 

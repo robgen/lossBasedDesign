@@ -6,17 +6,19 @@ load(fullfile(GPfolder, 'fullFit.mat'))
 
 %% Part 1: SDoF target design
 
-EALtarget = 0.5;
-designSDoF = 117; % update after using the slider
+EALtarget = 1;
+designSDoF = 2; % update after using the slider
+structureType = 'Wall'; % 'Frame'; % 
 
-design = lossBasedDesign;
+design = lossBasedDesign(structureType);
 design = getSeedEAL(design, fullFit);
+design = getSeedMAFEds(design);
 design = getDesignCandidates(design, EALtarget);
 design = selectDesignSDoF(design, designSDoF);
 plotEAL(design);
 
-design = getFrameMemberDetailing(design);
-plotFrameMemberDetailing(design)
+design = getMemberDetailing(design);
+plotMemberDetailing(design)
 
 %% Part 2: design members
 
