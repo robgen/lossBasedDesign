@@ -622,7 +622,7 @@ classdef lossBasedDesign
         function hazardExtrap = logExtrapHazardCurve(...
                 hazardCurve, faultRate, mode)
             
-            if nargin < 3; mode = 'linear'; end
+            if nargin < 3; mode = 'powerLaw'; end
             
             if strcmp(mode, 'powerLaw')
                 % out of sensitivity these seem reasonable
