@@ -16,10 +16,12 @@ Whether you use this project, have learned something from it, or just like it, p
 
 ## Dependencies
 surrogatePSDM (https://github.com/robgen/surrogatedPSDM)
+VULNERABILITYbuilding and EALcalculator (https://github.com/robgen/robSeismicAnalyses)
 
 ---
 
 ## Setup
+- From the repo robSeismicAnalyses (https://github.com/robgen/robSeismicAnalyses), copy the functions VULNERABILITYbuilding.m and EALcalculator.m. Add them to a folder on the Matlab path
 - Clone the surrogatePSDM repo (https://github.com/robgen/surrogatedPSDM) to any folder in your computer. Add this folder to your Matlab path
 - Clone the lossBasedDesign repo to any folder in your computer. Add this folder to the Matlab path and you are ready to go (or just cd to this folder)
 
