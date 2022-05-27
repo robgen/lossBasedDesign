@@ -109,9 +109,12 @@ classdef lossBasedDesign
             self.isEALTARGET = abs(self.EAL - EALtarget) <= ...
                 self.parameters.SDoF.toleranceEAL;
             
-            Cevd.EPH = 0.670;
+            Cevd.KIN = 0.670;
             Cevd.MTt = 0.444;
             Cevd.MTf = 0.565;
+            Cevd.FS1 = 0.186;
+            Cevd.MS1 = 0.500; % check this value against literature
+             
             
             deltaY = self.parameters.(self.structureType).deltaYield;
             self.CDRs = NaN(numel(self.FY),size(self.fragMedian,2));
