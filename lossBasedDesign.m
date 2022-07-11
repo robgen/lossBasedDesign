@@ -795,11 +795,13 @@ classdef lossBasedDesign
             
             frame.deltaCracking = frame.driftCracking * frame.effHeight;
             
+            compensatoryFactorForDyUnderest = 0.6;
             if manualDeltaYield == 0
                 frame.driftYield = 0.5 * frame.epsYsteel * ...
                     (frame.lengthBeam-frame.heightColumn) / frame.heightBeam;
 
-                frame.deltaYield = frame.driftYield * frame.effHeight;
+                frame.deltaYield = compensatoryFactorForDyUnderest * ...
+                    frame.driftYield * frame.effHeight;
             else
                 frame.deltaYield = manualDeltaYield;
                 
