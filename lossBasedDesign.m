@@ -31,18 +31,18 @@ classdef lossBasedDesign
         pushDesign
         propDesign
         
+        T
         FY
+        FU
         MU
+        hyst
+        hard
+
         EAL
     end
     
     properties(Access = 'private')
-        FU
-        T
-        
-        hyst
-        hard
-        
+
         isExtrapolated
         
         isEALTARGET
@@ -68,13 +68,68 @@ classdef lossBasedDesign
             
         end
         
-        
-        function self = getSeedEAL(self, GPfullFit, manualDeltaYield)
+
+        function self = DBDgeneral(self, manualDeltaYield)
             
             if nargin < 3; manualDeltaYield = 0; end
+
+            % General data
+            lrs = self.parameters.(self.structureType);
+
+            if numel(lrs.heightInterstorey) == 1
+                lrs.heightInterstorey = lrs.heightInterstorey * ...
+                    ones(lrs.Nstoreys,1);
+            end
+            if numel(lrs.massesBuilding) == 1
+                lrs.massesBuilding = lrs.massesBuilding * ...
+                    ones(lrs.Nstoreys,1);
+            end
+            lrs.heightStorey = cumsum(lrs.heightInterstorey);
+
+            self.parameters.(self.structureType) = lrs;
+
+            % LRS-specific DBD
+            self = self.([self.structureType 'DBDgeneral'])(manualDeltaYield);
+
+        end
+
+
+        function self = setSeedSDoFproperties(self)
+
+            % creates the ROWS in the matrices
+            fyDummy = linspace(self.parameters.SDoF.fyBounds(1), ...
+                self.parameters.SDoF.fyBounds(2), ...
+                self.parameters.SDoF.NseedsFy)';
+            % creates the COLS in the matrices
+            muDummy = linspace(self.parameters.SDoF.muBounds(1), ...
+                self.parameters.SDoF.muBounds(2), ...
+                self.parameters.SDoF.NseedsMu)';
+
+            [self.FY, self.MU] = meshgrid(fyDummy, muDummy);
+
+            deltaYield = self.parameters.(self.structureType).deltaYield;
+            self.T = 2*pi * (deltaYield ./ (self.FY*9.81)).^0.5;
+            % deltaYield must become an array. To be able to consider materials other than concrete
+
+            self.fy = reshape(self.FY, numel(self.FY), 1);
+            self.mu = reshape(self.MU, numel(self.MU), 1);
+            self.t = reshape(self.T, numel(self.T), 1);
+
+            self.hyst = cell(numel(self.fy),1);
+            self.hyst(:) = {self.parameters.SDoF.hysteresis};
+
+            self.hard = self.parameters.SDoF.hardening * ones(numel(self.fy),1);
+
+            self.fu = self.fy .* (1 + (self.mu-1).*self.hard);
+            self.FU = reshape(self.fu, numel(muDummy), numel(fyDummy));
+
+            self = checkExtrapolations(self);
+
+        end
+
+
+        function self = getSeedEAL(self, GPfullFit)
             
-            self = DBDgeneral(self, manualDeltaYield);
-            self = setSeedSDoFproperties(self);
             self = setDSthresholds(self);
             self = getFragilityVulnerability(self, GPfullFit);
             self = getEAL(self);
@@ -314,10 +369,11 @@ classdef lossBasedDesign
             
             figure('Position', [274   527   560   420]); hold on
             plot(self.pushDesign(:,1), self.pushDesign(:,2) * ...
-                effMass*9.81, 'k', 'LineWidth', 2)
+                effMass*9.81, 'k', 'LineWidth', 2, ...
+                'DisplayName', 'Design')
             scatter(deltaDS, interp1(self.pushDesign(:,1), ...
                 self.pushDesign(:,2)*effMass*9.81, deltaDS), ...
-                50, 'k', 'filled')
+                50, 'k', 'filled', 'DisplayName', 'DSs')
             
             if size(comparativePush,1) ~= 1
                 plot(comparativePush(:,1), comparativePush(:,2), 'o-', ...
@@ -398,30 +454,6 @@ classdef lossBasedDesign
             
         end
         
-        
-        function self = DBDgeneral(self, manualDeltaYield)
-            
-            % General data
-            lrs = self.parameters.(self.structureType);
-            
-            if numel(lrs.heightInterstorey) == 1
-                lrs.heightInterstorey = lrs.heightInterstorey * ...
-                    ones(lrs.Nstoreys,1);
-            end
-            if numel(lrs.massesBuilding) == 1
-                lrs.massesBuilding = lrs.massesBuilding * ...
-                    ones(lrs.Nstoreys,1);
-            end
-            lrs.heightStorey = cumsum(lrs.heightInterstorey);
-            
-            self.parameters.(self.structureType) = lrs;
-            
-            % LRS-specific DBD
-            self = self.([self.structureType 'DBDgeneral'])(manualDeltaYield);
-            
-        end
-        
-        
     end
     
     methods(Access = 'private')
@@ -479,41 +511,7 @@ classdef lossBasedDesign
             end
         end
         
-        
-        function self = setSeedSDoFproperties(self)
-            
-            % creates the ROWS in the matrices
-            fyDummy = linspace(self.parameters.SDoF.fyBounds(1), ...
-                self.parameters.SDoF.fyBounds(2), ...
-                self.parameters.SDoF.NseedsFy)';
-            % creates the COLS in the matrices
-            muDummy = linspace(self.parameters.SDoF.muBounds(1), ...
-                self.parameters.SDoF.muBounds(2), ...
-                self.parameters.SDoF.NseedsMu)';
-            
-            [self.FY, self.MU] = meshgrid(fyDummy, muDummy);
-            
-            deltaYield = self.parameters.(self.structureType).deltaYield;
-            self.T = 2*pi * (deltaYield ./ (self.FY*9.81)).^0.5;
-            % deltaYield must become an array. To be able to consider materials other than concrete
-            
-            self.fy = reshape(self.FY, numel(self.FY), 1);
-            self.mu = reshape(self.MU, numel(self.MU), 1);
-            self.t = reshape(self.T, numel(self.T), 1);
-            
-            self.hyst = cell(numel(self.fy),1);
-            self.hyst(:) = {self.parameters.SDoF.hysteresis};
-            
-            self.hard = self.parameters.SDoF.hardening * ones(numel(self.fy),1);
-            
-            self.fu = self.fy .* (1 + (self.mu-1).*self.hard);
-            self.FU = reshape(self.fu, numel(muDummy), numel(fyDummy));
-            
-            self = checkExtrapolations(self);
-            
-        end
-        
-        
+
         function self = setDSthresholds(self)
             
             for ds = numel(self.parameters.FragVuln.ductDS) : -1 : 1

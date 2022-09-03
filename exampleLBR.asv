@@ -16,12 +16,9 @@ opt.SDoF.NseedsMu = 60;
 opt.SDoF.fyBounds = [0.1 0.5];
 opt.SDoF.minCDR = [0.7 1 1 1]; 
 
-opt.Frame.Nparallel = 1;
-opt.Frame.massesBuilding = 100*[1 1 1 1]';
-opt.Frame.Nstoreys = 4;
-opt.Frame.Nbays = 3;
+opt.Frame.massesBuilding = 
 
-optRetrofit.General.fyFoundation = 0.45;
+optRetrofit.General.fyFoundation = 0.3;
 
 optRetrofit.Frame.asbuiltPush(:,1) = [0 0.04 0.06];
 optRetrofit.Frame.asbuiltPush(:,2) = [0 120 120] / (150*9.81);

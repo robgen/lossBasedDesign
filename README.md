@@ -13,8 +13,18 @@ Whether you use this project, have learned something from it, or just like it, p
 <a href="http://paypal.me/robgen" target="_blank"><img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_74x46.jpg" alt="Paypal" style="height: auto !important;width: auto !important;" ></a>
 
 ## Dependencies
-surrogatePSDM (https://github.com/robgen/surrogatedPSDM)
-VULNERABILITYbuilding, EALcalculator, CSMnbs, intersections (https://github.com/robgen/robSeismicAnalyses)
+Form https://github.com/robgen/surrogatedPSDM
+surrogatePSDM
+
+From https://github.com/robgen/robSeismicAnalyses
+VULNERABILITYbuilding, EALcalculator, CSMnbs, intersections
+
+## Changelog
+
+v1.1
+- in "lossBasedDesign", the method "DBDgeneral" is outside the method "getSeedEAL" and it must be called before it. The optional output "manualDeltaYield" is now to be provided in DBDgeneral rather than in getSeedEAL
+- in "lossBasedDesign", the method "setSeedSDoFproperties" is outside the method "getSeedEAL" and it must be called before it
+- added the subclass "lossBasedRetrofit", which inherits from "lossBasedDesign"
 
 ## Setup
 - From the repo robSeismicAnalyses (https://github.com/robgen/robSeismicAnalyses), copy the functions VULNERABILITYbuilding.m, EALcalculator.m, CSMnbs.m, and intersections.m. Add them to a folder on the Matlab path
