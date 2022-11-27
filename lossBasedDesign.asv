@@ -494,8 +494,12 @@ classdef lossBasedDesign
                 duct(R<=1,:) = R(R<=1);
                 duct(R>1,:) = PSDMformula.mu(R(R>1), self.powerLaw(n,1), 0); % mean
                 deltaSDoF = duct * self.parameters.(self.structureType).deltaYield;
-                driftGivenIM = ...
-                    self.parameters.(self.structureType).driftGivenIM(self, deltaSDoF);
+                % concieve a more abstract way. Does not work for walls
+                driftGivenIM = 100 * deltaSDoF .* self.parameters.Frame.driftShape' ./ ...
+                    self.parameters.Frame.effDispGivenUnitRoofDisp;
+                
+                ans = self.parameters.(self.structureType).driftGivenIM(...
+                    deltaSDoF);
                 for s = 1 : self.parameters.(self.structureType).Nstoreys                    
                     self.vulnDisaggregated(:,n,1+s) = ...
                         self.parameters.NSC.Dsens(s).SLF(driftGivenIM(:,s));
@@ -1003,7 +1007,7 @@ classdef lossBasedDesign
                 frame.driftYield = frame.deltaYield / frame.effHeight;
             end
             
-            frame.driftGivenIM = @(self, deltaSDoF) ...
+            frame.driftGivenIM = @(deltaSDoF) ...
                 100 * deltaSDoF .* self.parameters.Frame.driftShape' ./ ...
                 self.parameters.Frame.effDispGivenUnitRoofDisp;
 
@@ -1160,7 +1164,7 @@ classdef lossBasedDesign
             
             wall.dispUnitPlasticCurv = wall.plHingeLength .* ...
                 wall.heightStorey;
-
+            
             wall.dEffUnitPlasticCurv = ...
                 sum(wall.massesBuilding .* (wall.dispUnitPlasticCurv.^2)) / ...
                 sum(wall.massesBuilding .* wall.dispUnitPlasticCurv);
@@ -1188,16 +1192,6 @@ classdef lossBasedDesign
                     (1-wall.heightStorey/(3*wall.heightWall));
             end
             
-            totDispUnitPlasticCurv = ...
-                wall.dispProfileYield + wall.dispUnitPlasticCurv;
-            wall.driftUnitPlasticCurv = ...
-                (totDispUnitPlasticCurv - [0; totDispUnitPlasticCurv(1:end-1)]) ./ ...
-                wall.heightInterstorey;
-            
-            wall.driftGivenIM = @(self, deltaSDoF) ...
-                100 * deltaSDoF .* self.parameters.Wall.driftUnitPlasticCurv' ./ ...
-                self.parameters.Wall.dEffUnitPlasticCurv;
-
             self.parameters.(self.structureType) = wall;
         end
         

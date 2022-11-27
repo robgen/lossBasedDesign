@@ -90,6 +90,7 @@ classdef lossBasedRetrofit < lossBasedDesign
 
         end
 
+
         function plotEAL(self)
 
             plotEAL@lossBasedDesign(self)
@@ -108,6 +109,7 @@ classdef lossBasedRetrofit < lossBasedDesign
 
         end
         
+
         function plotMemberDetailing(self)
             
             plotMemberDetailing@lossBasedDesign(self)
@@ -125,6 +127,8 @@ classdef lossBasedRetrofit < lossBasedDesign
 
             legend
         end
+
+        
     end
 
 end
