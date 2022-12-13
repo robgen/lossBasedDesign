@@ -77,7 +77,7 @@ classdef lossBasedDesign
 
         function self = DBDgeneral(self, manualDeltaYield)
             
-            if nargin < 3; manualDeltaYield = 0; end
+            if nargin < 2; manualDeltaYield = 0; end
 
             % General data
             lrs = self.parameters.(self.structureType);
