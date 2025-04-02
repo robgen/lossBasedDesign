@@ -181,6 +181,8 @@ classdef lossBasedDesign
         
         function self = getDesignCandidates(self, EALtarget)
             
+            self.EALtarget = EALtarget;
+            
             self.isEALTARGET = abs(self.EAL - EALtarget) <= ...
                 self.parameters.SDoF.toleranceEAL;
             
@@ -223,7 +225,7 @@ classdef lossBasedDesign
             
             self.isCANDIDATE = self.isEALTARGET & ...
                 reshape(all(self.CDRs >= self.parameters.SDoF.minCDR, 2), ...
-                size(self.isEALTARGET,1), size(self.isEALTARGET,2));
+                size(self.isEALTARGET,1), size(self.isEALTARGET,2)); % TODO: add check on MAFE
             self.isCandidate = reshape(...
                 self.isCANDIDATE, numel(self.isCANDIDATE), 1);
             
@@ -262,7 +264,8 @@ classdef lossBasedDesign
             end
             candPlot(self.isDesign).Color = [0 0 0];
             candPlot(self.isDesign).LineWidth = 2;
-            
+            candPlot(self.isDesign).DisplayName = 'Design SDoF';
+
             if size(comparativePush,1) ~= 1 
                 if isfield(self.parameters.(self.structureType), 'effMass')
                     plot(comparativePush(:,1), comparativePush(:,2) / ...
@@ -275,7 +278,7 @@ classdef lossBasedDesign
             end
             
             title(self.isDesign)
-            legend([p, candPlot(1)])
+            legend([p, candPlot(1), candPlot(self.isDesign)])
             xlabel('Displacement [m]')
             ylabel('Spectral Acceleration [g]')
             set(gca, 'FontSize', 18)
@@ -318,11 +321,11 @@ classdef lossBasedDesign
                 'DisplayName', 'EAL seed SDoFs'); hold on
             p(2) = scatter3(self.FY(self.isEALTARGET), ...
                 self.MU(self.isEALTARGET), self.EAL(self.isEALTARGET), ...
-                200, 'k', 'MarkerEdgeAlpha', 0.5, ...
+                100, 'k', 'MarkerEdgeAlpha', 0.5, ...
                 'LineWidth', 1, 'DisplayName', 'EAL target met');
             p(3) = scatter3(self.FY(self.isCANDIDATE), ...
                 self.MU(self.isCANDIDATE), self.EAL(self.isCANDIDATE), ...
-                200, 'MarkerFaceColor',[0.466 0.674 0.188], ...
+                100, 'MarkerFaceColor',[0.466 0.674 0.188], ...
                 'MarkerEdgeColor', 'k', 'MarkerEdgeAlpha',0.5, ...
                 'DisplayName', 'Design candidates');
             p(4) = scatter3(self.FY(self.indCANDIDATE==self.isDesign), ...
@@ -585,7 +588,7 @@ classdef lossBasedDesign
 
 
         function self = calculateAccShape(self)
-            % FEMA P58 - Volume 1 - Eq. 5-11
+            % FEMA P58 - Volume 1 - Eq. 5-13
 
             switch self.structureType
                 case 'Frame'
