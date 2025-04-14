@@ -7,7 +7,7 @@ load(fullfile(GPfolder, 'fullFit.mat'))
 
 %% Input
 
-eqEALtarget = 0.2;
+eqEALtarget = 0.1;
 windMAFlimit = 0.02;
 designSDoF = 1; % update after using the slider
 structureType = 'Frame'; % 'Wall'; % 

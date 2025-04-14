@@ -162,16 +162,8 @@ classdef lossBasedDesign
             haz = self.parameters.Hazard;
             
             for n = numel(self.fy): -1 : 1
-                
-                for l = size(haz.intensityHazard,1) : -1 : 1
-                    intHaz(l) = interp1(haz.periodsHazard, ...
-                        haz.intensityHazard(l,:), self.t(n), ...
-                        'linear', 'extrap');
-                end
-                
-                hazCurve = self.logExtrapHazardCurve(...
-                    [intHaz', haz.MAFEhazard(:)], haz.faultRate, ...
-                    haz.extrapMode);
+                hazCurve = interpolateHazardCurve(self, ...
+                    haz, self.T(row,col));
                 
                 self.mafeDS(n,:) = self.calculateMAFEds(...
                     self.fragMedian(n,:), self.fragStDev(n,:), hazCurve);
@@ -547,16 +539,8 @@ classdef lossBasedDesign
 
             for n = numel(self.fy): -1 : 1
                 [row,col] = ind2sub(size(self.FY), n);
-
-                for l = size(haz.intensityHazard,1) : -1 : 1
-                    intHaz(l) = interp1(haz.periodsHazard, ...
-                        haz.intensityHazard(l,:), self.T(row,col), ...
-                        'linear', 'extrap');
-                end
-
-                hazCurve = self.logExtrapHazardCurve(...
-                    [intHaz', haz.MAFEhazard(:)], haz.faultRate, ...
-                    haz.extrapMode);
+                hazCurve = interpolateHazardCurve(self, ...
+                    haz, self.T(row,col));
 
                 self.EAL(row,col) = EALcalculator(...
                     [self.IMdef self.vulnerabilities(:,n)], ...
@@ -809,10 +793,55 @@ classdef lossBasedDesign
         end
         
         
+        function interpHazCurve = interpolateHazardCurve(self, haz, Tseed)
+            if Tseed < haz.periodsHazard(end)
+                for l = size(haz.intensityHazard,1) : -1 : 1
+                    intHaz(l) = interp1(haz.periodsHazard, ...
+                        haz.intensityHazard(l,:), Tseed);
+                end
+            else
+                for l = size(haz.intensityHazard,1) : -1 : 1
+                    intHaz(l) = self.extrapolateSpectrum(...
+                        haz.periodsHazard, haz.intensityHazard(l,:), ...
+                        Tseed);
+                end
+            end
+
+            interpHazCurve = self.logExtrapHazardCurve(...
+                [intHaz', haz.MAFEhazard(:)], haz.faultRate, ...
+                haz.extrapMode);
+        end
     end
     
     methods(Static)
         
+        function extrapolatedSA = extrapolateSpectrum(...
+                periods, SAs, periodsExtrap)
+        
+            idDecreasing = find(diff(SAs) < 0, 1, 'first');
+
+            p = polyfit(...
+                periods(idDecreasing:end), ...
+                log(SAs(idDecreasing:end)), ...
+                1);  % p(1) = b, p(2) = log(a)
+
+            % Compute scale to match last training point
+            xLast = periods(end);
+            yLast = SAs(end);
+            yFitAtLast = exp(polyval(p, xLast));
+            scale = yLast / yFitAtLast;
+
+            extrapolatedSA = scale * exp(polyval(p, periodsExtrap));
+
+%             testPeriods = linspace(periods(end), 5 * periods(end), 100);
+%             testSA = scale * exp(polyval(p, testPeriods));
+%             figure; hold on; grid on;
+%             plot(testPeriods, testSA, 'r-');
+%             scatter(periods(idDecreasing:end), SAs(idDecreasing:end), 'b');
+
+        end
+
+
         function hazardExtrap = logExtrapHazardCurve(...
                 hazardCurve, faultRate, mode)
             
@@ -820,7 +849,7 @@ classdef lossBasedDesign
             
             if strcmp(mode, 'powerLaw')
                 % out of sensitivity these seem reasonable
-                IMzero = 0.01;
+                IMzero = 0.001;
                 IMstep = IMzero;
                 
                 % define a (log)line between IM=0 and IM=IMmin
