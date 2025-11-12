@@ -192,37 +192,10 @@ classdef LBDearthquakeWind < lossBasedDesign
                             wind.T_ritorno = Range.T_ritorno(t);
                             wind.U_base = Range.Vento(v);     % Velocità di base a z=10m [m/s]
 
-                            if wind.T_ritorno == 1
-                                wind.cr = 0.75;
-                            elseif wind.T_ritorno == 50
-                                wind.cr = 1;
-                            else
-                                error('Return period can only be 1 or 50')
-                            end
-
+                            [wind.cr] = LBDPeriodo_Ritorno(wind.T_ritorno);
                             wind.U_ref = wind.U_base * wind.cr;     % Velocità di riferimento a z=10m [m/s]
                             wind.U_ref = wind.U_base;     % Velocità di riferimento a z=10m [m/s]
-
-                            switch wind.Type_of_terrain
-                                case 1
-                                    wind.beta = 6.5;
-                                    wind.u_star_ratio = 0.85;
-                                case 2
-                                    wind.beta = 6.0;
-                                    wind.u_star_ratio = 1.00;
-                                case 3
-                                    wind.beta = 5.25;
-                                    wind.u_star_ratio = 1.15;
-                                case 4
-                                    wind.beta = 4.85;
-                                    wind.u_star_ratio = 1.33;
-                                case 5
-                                    wind.beta = 4.00;
-                                    wind.u_star_ratio = 1.45;
-                                otherwise
-                                    error('Invalid value for T. Must be between 1 and 5.');
-                            end
-
+                            [wind.beta, wind.u_star_ratio] = Roughness(wind.Type_of_terrain);
                             wind.u_star_ref = wind.U_ref / (2.5 * log((10 - wind.z_d) / 0.07));     % Reference Fiction velocity [m/s]
                             wind.u_star = wind.u_star_ref * wind.u_star_ratio;                      % Fiction velocity [m/s]
                             wind.C_d = wind.C_w + wind.C_l;         % Coefficiente di drag [-]
@@ -230,7 +203,7 @@ classdef LBDearthquakeWind < lossBasedDesign
                             %% RISULTATI
 
                             % Solari 1982 - Along-wind response estimation
-                            [Spost_max, Acc_max] = LBDearthquakeWind.get_top_disp_acc_Solari(sys, wind);
+                            [Spost_max, Acc_max] = get_top_disp_acc_Solari(sys, wind);
 
                             FieldName = sprintf('TRitorno_%02d_Vento_%02d', Range.T_ritorno(t), Range.Vento(v));
                             if Range.T_ritorno(t) == 50         % SLU spostamento
@@ -238,15 +211,7 @@ classdef LBDearthquakeWind < lossBasedDesign
                             elseif Range.T_ritorno(t) == 1
                                 Risultati.(FieldName)(i,j) = Acc_max;
                             end
-
-                            if sys.n1 < 1
-                                n_limite = wind.a_0 / (sys.n1^0.56);
-                            elseif (1 <= sys.n1) && (sys.n1 <=2)
-                                n_limite = wind.a_0;
-                            else
-                                n_limite = 0.5 * wind.a_0 * sys.n1;
-                            end
-
+                            [n_limite] = Accelerazione_limite(sys.n1,wind.a_0);     % Calcolo accelerazione limite (variabile con la frequenza)
                             Acc_limite(i,j) = n_limite / 100;                       % Per passare da cm/s^2 a m/s^2
                             Spost_limite(i,j) = 80 / 500;
 
@@ -275,22 +240,22 @@ classdef LBDearthquakeWind < lossBasedDesign
                             end
 
 
-                            [a_i,b_i] = LBDearthquakeWind.Interp_1(Range,Curve_D_IntMeas,i,j,t);
+                            [a_i,b_i] = Interp_1(Range,Curve_D_IntMeas,i,j,t);
 
                             % plot(x,Y,'ko',x,(a_i*x.^b_i)/1000,'b-')
 
-                            [Vettore_V10] = LBDearthquakeWind.Vettore_vel_10(Range,v,a_i,b_i,beta_d,beta_c);
+                            [Vettore_V10] = Vettore_vel_10(Range,v,a_i,b_i,beta_d,beta_c);
 
                             % Interpolazione per trovare i tre valori di H(im)
 
-                            [H_values, k, lambda] = LBDearthquakeWind.interpolating_law( ...
+                            [H_values, k, lambda] = interpolating_law( ...
                                 Range.Vento(v), dev_std_norm_WEI, Vettore_V10);
                             % x = 1:1:50;
                             % plot(x, 1 - wblcdf(x, lambda, k))
 
-                            [k_sol] = LBDearthquakeWind.solve_k(H_values, Vettore_V10);
+                            [k_sol] = solve_k(H_values, Vettore_V10);
 
-                            [MAF, FieldName3] = LBDearthquakeWind.Calcolo_MAF(Range, ...
+                            [MAF, FieldName3] = Calcolo_MAF(Range, ...
                                 Spost_limite, Acc_limite, k_sol, beta_d,...
                                 b_i, beta_c, i, j, t, v);
 
@@ -314,172 +279,6 @@ classdef LBDearthquakeWind < lossBasedDesign
 
         end
 
-
-        function [x_peak,xddot_peak] = get_top_disp_acc_Solari(sys,wind)
-
-            % method by Solari TODO: specify which paper
-            Calcolo.Q = 2 * (1 - wind.z_d^2 / sys.h^2) * log((sys.h - wind.z_d) / wind.z_0) - 1;
-            Calcolo.J = 0.78 * Calcolo.Q^2;
-            Calcolo.BB = 6.71 * Calcolo.Q^2 / (1 + 0.26 * sys.b / sys.h);
-            Calcolo.f1 = sys.n1 * sys.h / wind.u_star;
-            Calcolo.C_x = 0;
-            Calcolo.x_1 = 12.32 * Calcolo.f1 * sys.d / (Calcolo.Q * sys.h);
-            Calcolo.N_f1 = 1 / Calcolo.x_1 - 1 / (2 * Calcolo.x_1^2) * (1 - exp(-2 * Calcolo.x_1));
-            Calcolo.C_Df_f1 = sqrt(wind.C_w^2 + 2 * wind.C_w * wind.C_l * Calcolo.N_f1 + wind.C_l^2);
-            Calcolo.x_2 = 3.55 * Calcolo.f1 / Calcolo.Q;
-            Calcolo.M_z = sys.b * sys.d * sys.rho_bulk;
-            Calcolo.C_x2 = 1 / Calcolo.x_2 - 1 / (2 * Calcolo.x_2^2) * (1 - exp(-2 * Calcolo.x_2));
-            Calcolo.RR = 0.59 * Calcolo.Q^2 / sys.xi_1 * (Calcolo.Q / Calcolo.f1)^(2/3) * ...
-                Calcolo.C_Df_f1^2 / wind.C_d^2 * Calcolo.C_x2 * ...
-                1 / (1 + 3.95 * (Calcolo.f1 /Calcolo.Q) * (sys.b / sys.h));
-            Calcolo.M_1 = Calcolo.M_z * sys.h / 3;
-            Calcolo.q_star = 0.5 * wind.rho_air * wind.u_star^2;
-            Calcolo.x_mean = wind.C_d * sys.b * sys.h * Calcolo.q_star * Calcolo.J / ...
-                (Calcolo.M_1 * (2 * pi * sys.n1)^2);
-            Calcolo.sigma_x = wind.C_d * sys.b * sys.h * Calcolo.q_star / ...
-                (Calcolo.M_1 * (2 * pi * sys.n1)^2) * sqrt(wind.beta * Calcolo.BB / 6 + Calcolo.RR);
-            Calcolo.v_x = sys.n1 * sqrt(Calcolo.RR / (wind.beta * Calcolo.BB / 6 + Calcolo.RR));
-            Calcolo.K_x = (1.175 + 2 * log(Calcolo.v_x * wind.T))^(1/2);
-            Calcolo.G = 1 + Calcolo.K_x * Calcolo.sigma_x / Calcolo.x_mean;
-            Calcolo.X_max = Calcolo.G * Calcolo.x_mean;
-            Calcolo.sigma_xddot = wind.C_d * sys.b * sys.h * Calcolo.q_star / Calcolo.M_1 * sqrt(Calcolo.RR);
-            Calcolo.K_xddot = (1.175 + 2 * log(sys.n1 * wind.T))^(1/2);
-            Calcolo.Xddot_max = Calcolo.K_xddot * Calcolo.sigma_xddot;
-
-            x_peak = Calcolo.X_max;
-            xddot_peak = Calcolo.Xddot_max;
-
-        end
-
-
-        function [a_i,b_i] = Interp_1(Range,Curve_D_IntMeas,i,j,t)
-            % Funzione per interpolazione della curva parametro intensità vs prestazione media
-
-
-            FieldName2 = sprintf('TRitorno_%02d_Bulk_%03d_freq_%03d', Range.T_ritorno(t), Range.rho_bulk(i), round(Range.n1(j)*100));
-
-            % Interpolazione per a_i e b_i
-
-            x = Curve_D_IntMeas.(FieldName2)(1,4:length(Range.Vento));
-            Y = Curve_D_IntMeas.(FieldName2)(2,4:length(Range.Vento));
-
-            log_x = log(x);
-            log_Y = log(Y * 1000);
-            p = polyfit(log_x, log_Y, 1);
-            b_i = p(1);
-            a_i = exp(p(2));
-            % a_i = 0.00056;
-
-
-        end
-    
-
-        function Vettore_V10 = Vettore_vel_10(Range, v, a_i, b_i, beta_d, beta_c)
-            % Funzione per interpolazione della curva parametro intensità vs prestazione media
-
-
-            Vettore_V10(1,1) = (Range.Vento(v) / a_i) ^ (1/b_i) * ...
-                exp(-0.5 * sqrt(beta_d^2 + beta_c^2) / b_i);
-
-            Vettore_V10(2,1) = (Range.Vento(v) / a_i) ^ (1/b_i) * ...
-                exp(-1.5 * sqrt(beta_d^2 + beta_c^2) / b_i);
-
-            Vettore_V10(3,1) = (Range.Vento(v) / a_i) ^ (1/b_i) * ...
-                exp(-3.0 * sqrt(beta_d^2 + beta_c^2) / b_i);
-        end
-
-
-        function [H_values, k, lambda] = interpolating_law(mu_WEI, dev_std_norm_WEI, Vettore_V10)
-            % Utilizzo della distribuzione di weibull per la velocità del vento
-
-            sigma = dev_std_norm_WEI * mu_WEI;
-
-            % Funzione anonima per trovare k e lambda
-            f = @(p) [p(2) * gamma(1 + 1/p(1)) - mu_WEI; ...
-                p(2)^2 * (gamma(1 + 2/p(1)) - (gamma(1 + 1/p(1)))^2) - sigma^2];
-
-            % Valori iniziali (stima approssimativa)
-            p0 = [1, 1];
-
-            % Risoluzione numerica
-            options = optimoptions('fsolve', 'Display', 'off');
-            [k_lambda, ~] = fsolve(f, p0, options);
-
-            k = k_lambda(1); % Forma
-            lambda = k_lambda(2); % Scala
-
-            H_values = 1 - wblcdf(Vettore_V10, lambda, k);
-
-        end
-    
-    
-        function k_values = solve_k(H_values, Vettore_V10)
-            % Funzione per trovare i valori di k0, k1 e k2
-            %
-            % H_values: vettore con i tre valori noti di H
-            % s_values: vettore con i tre valori noti di s
-
-            % % % Funzione anonima per il sistema di equazioni
-            % % fun = @(k) [
-            % %     k(1) * exp(-k(3) * (log(Vettore_V10(1)))^2 - k(2) * log(Vettore_V10(1))) - H_values(1);
-            % %     k(1) * exp(-k(3) * (log(Vettore_V10(2)))^2 - k(2) * log(Vettore_V10(2))) - H_values(2);
-            % %     k(1) * exp(-k(3) * (log(Vettore_V10(3)))^2 - k(2) * log(Vettore_V10(3))) - H_values(3)
-            % % ];
-            % %
-            % % % Valori iniziali per fsolve
-            % % k0_guess = [1e-18; -30; 8];
-            % %
-            % % % Risoluzione del sistema non lineare
-            % % options = optimoptions('fsolve', 'Display', 'iter');
-            % % k_values = fsolve(fun, k0_guess, options);
-
-            k1 = (log(H_values(3)/H_values(1)) + log(H_values(2)/H_values(1)) * (log(Vettore_V10(3)))^2 / ((log(Vettore_V10(1)))^2 - (log(Vettore_V10(2)))^2)...
-                - log(H_values(2)/H_values(1)) * (log(Vettore_V10(1)))^2 / ((log(Vettore_V10(1)))^2 - (log(Vettore_V10(2)))^2)) / ...
-                ((log(Vettore_V10(1)) - log(Vettore_V10(2))) * 1 / ((log(Vettore_V10(1)))^2 - (log(Vettore_V10(2)))^2) * (log(Vettore_V10(3)))^2 - log(Vettore_V10(3)) - ...
-                (log(Vettore_V10(1)) - log(Vettore_V10(2))) * 1 / ((log(Vettore_V10(1)))^2 - (log(Vettore_V10(2)))^2) * (log(Vettore_V10(1)))^2 + log(Vettore_V10(1)));
-
-            k2 = (log(H_values(2)/H_values(1)) - k1 * (log(Vettore_V10(1)) - log(Vettore_V10(2)))) * 1 / ((log(Vettore_V10(1)))^2 - (log(Vettore_V10(2)))^2);
-
-            k0 = H_values(1) / exp(-k2 * (log(Vettore_V10(1)))^2 - k1 * log(Vettore_V10(1)));
-
-            k_values(1) = k0;
-            k_values(2) = k1;
-            k_values(3) = k2;
-
-        end
-    
-    
-        function [MAF,FieldName3] = Calcolo_MAF( ...
-                Range, Spost_limite, Acc_limite, k_sol, beta_d,...
-                b_i, beta_c, i, j, t, v)
-                % Funzione per interpolazione della curva parametro intensità vs prestazione media
-
-
-            q_i = 1 / (1 + 2 * k_sol(3) * beta_d^2 / b_i^2);
-            phi_i = 1 / (1 + 2 * k_sol(3) * (beta_d^2 + beta_c^2) / b_i^2);
-
-            if Range.T_ritorno(t) == 50         % SLU spostamento
-                im_c = Spost_limite(i,j);
-            elseif Range.T_ritorno(t) == 1
-                im_c = Acc_limite(i,j);
-            end
-
-            H_i_Cap = k_sol(1) * exp(-k_sol(3) * (log(im_c))^2 - k_sol(2) * log(im_c));
-
-            FieldName3 = sprintf('Vel_%02d', Range.Vento(v));
-
-            % if Range.T_ritorno(t) == 50         % SLU spostamento
-            %     lambda_PS_spost.(FieldName3)(i,j) = sqrt(phi_i) * k_sol(1)^(1 - phi_i) * H_i_Cap^(phi_i) * ...
-            %     exp(0.5 * q_i * (k_sol(2))^2 * (beta_c^2 + phi_i * beta_d^2));
-            % elseif Range.T_ritorno(t) == 1
-            %     lambda_PS_acc.(FieldName3)(i,j) = sqrt(phi_i) * k_sol(1)^(1 - phi_i) * H_i_Cap^(phi_i) * ...
-            %     exp(0.5 * q_i * (k_sol(2))^2 * (beta_c^2 + phi_i * beta_d^2));
-            % end
-
-            MAF = sqrt(phi_i) * k_sol(1)^(1 - phi_i) * H_i_Cap^(phi_i) * ...
-                exp(0.5 * q_i * (k_sol(2))^2 * (beta_c^2 + phi_i * beta_d^2));
-
-        end
     end
 
 end
