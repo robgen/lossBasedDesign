@@ -10,12 +10,14 @@ load(fullfile(GPfolder, 'fullFit.mat'))
 eqEALtarget = 0.1;
 windMAFlimit = 0.02;
 designSDoF = 1; % update after using the slider
-structureType = 'Frame'; % 'Wall'; % 
+structureType = 'Frame';
 
 opt.SDoF.NseedsFy = 60;
 opt.SDoF.NseedsMu = 60;
 opt.SDoF.fyBounds = [0.1 0.5];
-opt.SDoF.minCDR = [0.7 1 1 1]; 
+opt.SDoF.minCDR = [0.7 1 1 1];
+opt.SDoF.hysteresis = 'KIN'; % for steel frames
+opt.SDoF.toleranceEAL = 0.001;
 
 interstoreyHeight = 4;
 opt.Frame.Nparallel = 4;

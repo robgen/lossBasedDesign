@@ -19,7 +19,7 @@ classdef LBDearthquakeWind < lossBasedDesign
 
             self@lossBasedDesign(structureType, opt);
             self.windParams = optWind;
-            warning('Code some checks for the extra intput')
+            warning('Code some checks for the extra input')
         end
 
 

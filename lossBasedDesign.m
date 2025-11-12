@@ -163,7 +163,7 @@ classdef lossBasedDesign
             
             for n = numel(self.fy): -1 : 1
                 hazCurve = interpolateHazardCurve(self, ...
-                    haz, self.T(row,col));
+                    haz, self.t(n));
                 
                 self.mafeDS(n,:) = self.calculateMAFEds(...
                     self.fragMedian(n,:), self.fragStDev(n,:), hazCurve);
