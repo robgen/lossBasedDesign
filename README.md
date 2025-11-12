@@ -19,6 +19,9 @@ surrogatePSDM
 From https://github.com/robgen/robSeismicAnalyses
 VULNERABILITYbuilding, EALcalculator, CSMnbs, intersections
 
+From matlab repositories
+Optimization add-on (only for the EQ+Wind version)
+
 ## Changelog
 
 v1.1
